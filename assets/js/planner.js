@@ -32,24 +32,32 @@ let startTile = centerTile - Math.floor(trapSize / 2)
    Runtime variables used by the planner
 ========================================================= */
 
+/* DOM REFERENCES */
+let map = document.getElementById("map")
+
 const castleDialog = document.getElementById("castleDialog")
 const castleForm = document.getElementById("castleForm")
-
-let map = document.getElementById("map")
+const castleAddBtn = document.getElementById("castleAddBtn")
+const castleDialogTitle = document.getElementById("castleDialogTitle")
 
 const deleteDialog = document.getElementById("deleteDialog")
 const deleteConfirm = document.getElementById("deleteConfirm")
 const deleteCancel = document.getElementById("deleteCancel")
 
+/* DIALOG STATE */
+let editTarget = null
 let deleteTarget = null
 
+/* DRAG STATE */
 let selected = null
 let offsetX = 0
 let offsetY = 0
 
+/* OBJECT STATE */
 let id = 1
 let spawnOffset = 0
 
+/* VIEW STATE */
 let zoom = 1
 
 /* =========================================================
@@ -217,7 +225,12 @@ function createBanner(x = 0, y = 0){
 
 function addCastle(){
 
+    editTarget = null
     castleForm.reset()
+
+    castleDialogTitle.textContent = "New castle"
+    castleAddBtn.textContent = "Add"
+
     castleDialog.showModal()
 
 }
@@ -264,14 +277,27 @@ castleForm.addEventListener("submit", (e) => {
     let name = document.getElementById("castleName").value
     let power = document.getElementById("castlePower").value || "0M"
 
-    createCastle(
-        spawnOffset * castleSize * grid,
-        0,
-        name,
-        power
-    )
+    if(editTarget){
 
-    spawnOffset++
+        editTarget.dataset.name = name
+        editTarget.dataset.power = power
+
+        editTarget.innerHTML = `
+<div class="castle-name">${name}</div>
+<div class="castle-power">${power}</div>
+`
+
+    }else{
+
+        createCastle(
+            spawnOffset * castleSize * grid,
+            0,
+            name,
+            power
+        )
+
+        spawnOffset++
+    }
 
     castleDialog.close()
 
@@ -335,20 +361,20 @@ function makeDraggable(el){
     })
 
 
-    el.addEventListener("dblclick",(e)=>{
+    el.addEventListener("dblclick",()=>{
 
         if(!el.classList.contains("castle")) return
 
-        let name = prompt("Player name", el.dataset.name)
-        if(name) el.dataset.name = name
+        editTarget = el
 
-        let power = prompt("New power", el.dataset.power)
-        if(power) el.dataset.power = power
+        document.getElementById("castleName").value = el.dataset.name
+        document.getElementById("castlePower").value = el.dataset.power
 
-        el.innerHTML = `
-<div class="castle-name">${el.dataset.name}</div>
-<div class="castle-power">${el.dataset.power}</div>
-`
+        castleDialogTitle.textContent = "Edit castle"
+        castleAddBtn.textContent = "Update"
+
+        castleDialog.showModal()
+
     })
 
 }
