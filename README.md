@@ -35,6 +35,7 @@ This planner helps organize player positioning around bear traps and plains HQ d
 - Export / import layout JSON
 - Export player list to CSV
 - Zoom levels (75–200%)
+- Export map as image (PNG) for easy sharing
 
 ---
 

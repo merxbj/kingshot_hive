@@ -882,6 +882,38 @@ function exportPlayerList(){
     URL.revokeObjectURL(url)
 
 }
+async function exportScreenshot(){
+
+    const mapEl = document.getElementById("map")
+
+    // 🔹 backup huidige state
+    const originalTransform = mapEl.style.transform
+
+    // 🔹 force correcte rendering
+    mapEl.style.transform = "scale(1)"
+    mapEl.classList.add("export-mode")
+
+    const canvas = await html2canvas(mapEl, {
+        backgroundColor: "#1b1b1b",
+        scale: 2,
+        useCORS: true
+    })
+
+    // 🔹 restore
+    mapEl.style.transform = originalTransform
+    mapEl.classList.remove("export-mode")
+
+    canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob)
+
+        const a = document.createElement("a")
+        a.href = url
+        a.download = "kingshot_map.png"
+        a.click()
+
+        URL.revokeObjectURL(url)
+    })
+}
 
 /* =========================================================
    INITIALIZATION
