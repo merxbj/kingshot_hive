@@ -117,6 +117,7 @@ No server or installation required.
 - HTML5
 - CSS3
 - Browser localStorage
+- html2canvas (image export)
 
 No frameworks required.
 
