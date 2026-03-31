@@ -23,8 +23,8 @@ const castleSize = 2
 const trapSize = 3
 
 const mapTiles = 30
-let centerTile = mapTiles / 2
-let startTile = centerTile - Math.floor(trapSize / 2)
+const centerTile = mapTiles / 2
+const startTile = centerTile - Math.floor(trapSize / 2)
 
 /* =========================================================
    GLOBAL STATE
@@ -778,6 +778,18 @@ function loadLayout(){
     })
     updatePlayerList()
     applyCastleLevels()
+}
+
+function clearLayout(){
+
+    // adds empty layout to storage
+    localStorage.setItem("kingshotLayout",JSON.stringify([]))
+
+    // then load it to clear the map and reset all variables
+    loadLayout()
+
+    // finally, initialize as new with traps in starting position
+    positionTraps()
 }
 
 /* =========================================================
