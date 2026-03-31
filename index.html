@@ -56,6 +56,37 @@
 
 </dialog>
 
+<dialog id="originDialog">
+
+    <h3>Map settings</h3>
+
+    <label>
+        Origin X
+        <input type="number" id="originX" value="0">
+    </label>
+
+    <label>
+        Origin Y
+        <input type="number" id="originY" value="0">
+    </label>
+
+    <label>
+        Width (tiles)
+        <input type="number" id="mapWidth" value="40" min="1">
+    </label>
+
+    <label>
+        Height (tiles)
+        <input type="number" id="mapHeight" value="25" min="1">
+    </label>
+
+    <div class="dialog-buttons">
+        <button onclick="saveMapSettings()">Save</button>
+        <button id="originCancelBtn">Cancel</button>
+    </div>
+
+</dialog>
+
 <h2>Kingshot Bear Trap Layout</h2>
 
 <div class="layout">
@@ -97,6 +128,11 @@
                 <button class="zoom-btn active" onclick="setZoom(1,this)">100%</button>
                 <button class="zoom-btn" onclick="setZoom(1.5,this)">150%</button>
                 <button class="zoom-btn" onclick="setZoom(2,this)">200%</button>
+            </div>
+
+            <div class="toolbar-group">
+                <button onclick="openOriginDialog()">Map settings</button>
+                <span id="originLabel" class="origin-label">Origin: (0, 0)</span>
             </div>
 
         </div>

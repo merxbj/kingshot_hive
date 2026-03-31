@@ -22,9 +22,10 @@ const grid = 40
 const castleSize = 2
 const trapSize = 3
 
-const mapTiles = 30
-const centerTile = mapTiles / 2
-const startTile = centerTile - Math.floor(trapSize / 2)
+let mapTilesX = 40
+let mapTilesY = 25
+let centerTile = mapTilesX / 2
+let startTile = centerTile - Math.floor(trapSize / 2)
 
 /* =========================================================
    GLOBAL STATE
@@ -60,6 +61,10 @@ let spawnOffset = 0
 /* VIEW STATE */
 let zoom = 1
 
+/* ORIGIN */
+let originX = 0
+let originY = 0
+
 /* =========================================================
    MAP OBJECT REFERENCES
    ---------------------------------------------------------
@@ -82,6 +87,12 @@ function trapOffset(){
     return (grid * trapSize - trap1.offsetWidth) / 2
 }
 
+function applyMapDimensions(){
+    map.style.width  = mapTilesX * grid + "px"
+    map.style.height = mapTilesY * grid + "px"
+    document.querySelector(".toolbar-container").style.width = (mapTilesX * grid + 40) + "px"
+}
+
 function buildAxes(){
 
     const tilesX = Math.round(map.offsetWidth  / grid)
@@ -95,13 +106,13 @@ function buildAxes(){
 
     for(let i = 0; i < tilesX; i++){
         const d = document.createElement("div")
-        d.textContent = i
+        d.textContent = originX + i
         axisX.appendChild(d)
     }
 
-    for(let i = 0; i < tilesY; i++){
+    for(let i = tilesY - 1; i >= 0; i--){
         const d = document.createElement("div")
-        d.textContent = i
+        d.textContent = originY + i
         axisY.appendChild(d)
     }
 
@@ -119,7 +130,43 @@ function positionTraps(){
 
 }
 
+/* =========================================================
+   ORIGIN
+========================================================= */
+
+function updateOriginLabel(){
+    document.getElementById("originLabel").textContent = `Origin: (${originX}, ${originY})`
+}
+
+function openOriginDialog(){
+    document.getElementById("originX").value = originX
+    document.getElementById("originY").value = originY
+    document.getElementById("mapWidth").value = mapTilesX
+    document.getElementById("mapHeight").value = mapTilesY
+    document.getElementById("originDialog").showModal()
+}
+
+function saveMapSettings(){
+    originX   = parseInt(document.getElementById("originX").value)  || 0
+    originY   = parseInt(document.getElementById("originY").value)  || 0
+    mapTilesX = parseInt(document.getElementById("mapWidth").value) || mapTilesX
+    mapTilesY = parseInt(document.getElementById("mapHeight").value)|| mapTilesY
+    applyMapDimensions()
+    saveLayout()
+    updateOriginLabel()
+    buildAxes()
+    document.getElementById("originDialog").close()
+}
+
+// keep backward-compat alias used by cancel button wiring
+function saveOrigin(){ saveMapSettings() }
+
+document.getElementById("originCancelBtn").addEventListener("click", function(){
+    document.getElementById("originDialog").close()
+})
+
 window.addEventListener("load", function(){
+    applyMapDimensions()
     buildAxes()
     positionTraps()
 })
@@ -166,8 +213,8 @@ function isTileOccupied(tileX, tileY, size){
 }
 function findFreeTile(size){
 
-    for(let y = 0; y < mapTiles; y++){
-        for(let x = 0; x < mapTiles; x++){
+    for(let y = 0; y < mapTilesY; y++){
+        for(let x = 0; x < mapTilesX; x++){
 
             if(!isTileOccupied(x, y, size)){
                 return {x, y}
@@ -759,7 +806,13 @@ function saveLayout(){
 
     })
 
-    localStorage.setItem("kingshotLayout",JSON.stringify(layout))
+    const save = {
+        origin: { x: originX, y: originY },
+        dimensions: { w: mapTilesX, h: mapTilesY },
+        objects: layout
+    }
+
+    localStorage.setItem("kingshotLayout", JSON.stringify(save))
 
 }
 
@@ -777,7 +830,27 @@ function loadLayout(){
     delete trap1.dataset.used
     delete trap2.dataset.used
 
-    let layout=JSON.parse(data)
+    let parsed = JSON.parse(data)
+
+    // Support both new {origin, objects} format and legacy bare array
+    let layout, origin, dimensions
+    if(Array.isArray(parsed)){
+        layout = parsed
+        origin = { x: 0, y: 0 }
+        dimensions = { w: 40, h: 25 }
+    } else {
+        layout = parsed.objects || []
+        origin = parsed.origin || { x: 0, y: 0 }
+        dimensions = parsed.dimensions || { w: 40, h: 25 }
+    }
+
+    originX   = origin.x
+    originY   = origin.y
+    mapTilesX = dimensions.w
+    mapTilesY = dimensions.h
+    applyMapDimensions()
+    updateOriginLabel()
+    buildAxes()
 
     document.querySelectorAll(".castle,.banner,.plainshq").forEach(c=>c.remove())
 
@@ -810,8 +883,14 @@ function loadLayout(){
 
 function clearLayout(){
 
+    originX = 0
+    originY = 0
+    mapTilesX = 40
+    mapTilesY = 25
+    applyMapDimensions()
+
     // adds empty layout to storage
-    localStorage.setItem("kingshotLayout",JSON.stringify([]))
+    localStorage.setItem("kingshotLayout", JSON.stringify({ origin: { x: 0, y: 0 }, dimensions: { w: 40, h: 25 }, objects: [] }))
 
     // then load it to clear the map and reset all variables
     loadLayout()
