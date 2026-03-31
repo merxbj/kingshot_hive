@@ -53,6 +53,10 @@ let deleteTarget = null
 let selected = null
 let offsetX = 0
 let offsetY = 0
+let hasDragged = false
+
+/* SELECTION STATE */
+let activeObject = null
 
 /* OBJECT STATE */
 let id = 1
@@ -170,6 +174,58 @@ window.addEventListener("load", function(){
     buildAxes()
     positionTraps()
 })
+
+map.addEventListener("click", (e)=>{
+    if(e.target === map) clearSelection()
+})
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+function clearAxisHighlights(){
+    document.querySelectorAll("#axisX .axis-highlight, #axisY .axis-highlight")
+        .forEach(d => d.classList.remove("axis-highlight"))
+}
+
+function highlightAxesForElement(el){
+    let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
+               el.classList.contains("castle") ? castleSize : 1
+    let offset = (grid * size - el.offsetWidth) / 2
+    let tileX = Math.round((parseFloat(el.style.left) - offset) / grid)
+    let tileY = Math.round((parseFloat(el.style.top)  - offset) / grid)
+
+    clearAxisHighlights()
+    const axisX = document.getElementById("axisX")
+    const axisY = document.getElementById("axisY")
+    // X: logical bottom-left X = tileX (left-to-right, unchanged)
+    if(axisX.children[tileX]) axisX.children[tileX].classList.add("axis-highlight")
+    // Y: logical bottom-left Y = mapTilesY - tileY - size, which sits at axis child index tileY + size - 1
+    const axisYIndex = tileY + size - 1
+    if(axisY.children[axisYIndex]) axisY.children[axisYIndex].classList.add("axis-highlight")
+}
+
+function clearSelection(){
+    document.querySelectorAll(".castle, .banner, .trap, .plainshq").forEach(o => o.classList.remove("active"))
+    document.querySelectorAll(".player").forEach(p => p.classList.remove("active"))
+    clearAxisHighlights()
+    activeObject = null
+}
+
+function selectMapObject(el){
+    const wasActive = el.classList.contains("active")
+    clearSelection()
+    if(wasActive) return
+    activeObject = el
+    el.classList.add("active")
+    if(el.classList.contains("castle")){
+        document.querySelectorAll(".player").forEach(p => {
+            const nameEl = p.querySelector(".player-name")
+            if(nameEl && nameEl.textContent === el.dataset.name) p.classList.add("active")
+        })
+    }
+    highlightAxesForElement(el)
+}
 
 /* =========================================================
    OBJECT CREATION
@@ -481,6 +537,7 @@ function makeDraggable(el){
         if(e.button !== 0) return
 
         selected = el
+        hasDragged = false
 
         let rect = el.getBoundingClientRect()
 
@@ -544,6 +601,8 @@ document.addEventListener("mousemove",(e)=>{
 
     if(!selected) return
 
+    hasDragged = true
+
     let rect = map.getBoundingClientRect()
 
     let x = (e.clientX - rect.left - offsetX) / zoom
@@ -586,6 +645,12 @@ document.addEventListener("mouseup",()=>{
 
     selected.classList.remove("drag-preview")
     selected.classList.remove("dragging")
+
+    if(!hasDragged){
+        selectMapObject(selected)
+    } else if(selected === activeObject){
+        highlightAxesForElement(selected)
+    }
 
     selected = null
 
@@ -722,19 +787,16 @@ function updatePlayerList(){
 
             const active = el.classList.contains("active")
 
-            const playersUI = document.querySelectorAll(".player")
-            const castles = document.querySelectorAll(".castle")
-
-            playersUI.forEach(e=>e.classList.remove("active"))
-            castles.forEach(e=>e.classList.remove("active"))
+            clearSelection()
 
             if(active) return
 
             el.classList.add("active")
 
-            castles.forEach(c=>{
+            document.querySelectorAll(".castle").forEach(c=>{
                 if(c.dataset.name === p.name){
                     c.classList.add("active")
+                    highlightAxesForElement(c)
                 }
             })
 
@@ -791,6 +853,7 @@ function saveLayout(){
 
         let tileX=Math.round((parseInt(c.style.left)-offset)/grid)
         let tileY=Math.round((parseInt(c.style.top)-offset)/grid)
+        let logicalY=mapTilesY - tileY - size
 
         layout.push({
             type:c.classList.contains("trap")?"trap":
@@ -801,7 +864,7 @@ function saveLayout(){
             power:c.dataset.power||"",
             trap:c.dataset.trap||"F",
             x:tileX,
-            y:tileY
+            y:logicalY
         })
 
     })
@@ -857,9 +920,9 @@ function loadLayout(){
     layout.forEach(c=>{
 
         if(c.type==="castle")
-            createCastle(c.x*grid, c.y*grid, c.name, c.power, c.trap, true)
-        if(c.type==="banner") createBanner(c.x*grid,c.y*grid)
-        if(c.type==="plainshq") createPlainsHQ(c.x*grid,c.y*grid)
+            createCastle(c.x*grid, (mapTilesY - castleSize - c.y)*grid, c.name, c.power, c.trap, true)
+        if(c.type==="banner") createBanner(c.x*grid, (mapTilesY - 1 - c.y)*grid)
+        if(c.type==="plainshq") createPlainsHQ(c.x*grid, (mapTilesY - trapSize - c.y)*grid)
 
         if(c.type==="trap"){
 
@@ -867,11 +930,11 @@ function loadLayout(){
 
             if(!trap1.dataset.used){
                 trap1.style.left=c.x*grid+offset+"px"
-                trap1.style.top=c.y*grid+offset+"px"
+                trap1.style.top=(mapTilesY - trapSize - c.y)*grid+offset+"px"
                 trap1.dataset.used=true
             }else{
                 trap2.style.left=c.x*grid+offset+"px"
-                trap2.style.top=c.y*grid+offset+"px"
+                trap2.style.top=(mapTilesY - trapSize - c.y)*grid+offset+"px"
             }
 
         }

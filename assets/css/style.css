@@ -395,6 +395,22 @@ body{
     color:white;
 }
 
+.banner.active{
+    outline:3px solid #2e7d32;
+}
+
+.trap.active,
+.plainshq.active{
+    outline:3px solid #2e7d32;
+}
+
+.axis-highlight{
+    background:#f0c040;
+    color:#111;
+    font-weight:bold;
+    border-radius:4px;
+}
+
 /* =========================================================
    BUTTONS / INPUTS
 ========================================================= */
