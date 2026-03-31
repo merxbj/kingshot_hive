@@ -95,7 +95,6 @@ function trapOffset(){
 function applyMapDimensions(){
     map.style.width  = mapTilesX * grid + "px"
     map.style.height = mapTilesY * grid + "px"
-    document.querySelector(".toolbar-container").style.width = (mapTilesX * grid + 40) + "px"
 }
 
 function buildAxes(){
@@ -856,6 +855,16 @@ function updatePlayerList(){
                 if(c.dataset.name === p.name){
                     c.classList.add("active")
                     highlightAxesForElement(c)
+                    const mapWrapper = document.querySelector(".map-wrapper")
+                    const rect = c.getBoundingClientRect()
+                    const wrapperRect = mapWrapper.getBoundingClientRect()
+                    const cx = rect.left + rect.width  / 2 - wrapperRect.left
+                    const cy = rect.top  + rect.height / 2 - wrapperRect.top
+                    mapWrapper.scrollBy({
+                        left: cx - mapWrapper.clientWidth  / 2,
+                        top:  cy - mapWrapper.clientHeight / 2,
+                        behavior: "smooth"
+                    })
                 }
             })
 
