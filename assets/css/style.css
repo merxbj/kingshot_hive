@@ -470,6 +470,14 @@ input[type="file"]:hover::file-selector-button{
     outline:2px dashed rgba(255,200,0,0.6);
 }
 
+#castleCoords{
+    display:none;
+}
+
+#castleDialog.edit-mode #castleCoords{
+    display:block;
+}
+
 /* =========================================================
    DIALOG / MODAL
 ========================================================= */

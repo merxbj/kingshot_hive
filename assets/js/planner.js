@@ -48,6 +48,7 @@ const deleteCancel = document.getElementById("deleteCancel")
 /* DIALOG STATE */
 let editTarget = null
 let deleteTarget = null
+let posDialogTarget = null
 
 /* DRAG STATE */
 let selected = null
@@ -168,6 +169,19 @@ function saveOrigin(){ saveMapSettings() }
 document.getElementById("originCancelBtn").addEventListener("click", function(){
     document.getElementById("originDialog").close()
 })
+
+document.getElementById("posCancelBtn").addEventListener("click", function(){
+    document.getElementById("posDialog").close()
+})
+
+function savePosDialog(){
+    let logicalX = parseInt(document.getElementById("posX").value) - originX
+    let logicalY = parseInt(document.getElementById("posY").value) - originY
+    applyLogicalPosition(posDialogTarget, logicalX, logicalY)
+    if(posDialogTarget === activeObject) highlightAxesForElement(posDialogTarget)
+    posDialogTarget = null
+    document.getElementById("posDialog").close()
+}
 
 window.addEventListener("load", function(){
     applyMapDimensions()
@@ -386,6 +400,27 @@ function createPlainsHQ(x=0,y=0){
 }
 
 /* =========================================================
+   COORDINATE HELPERS
+========================================================= */
+
+function getLogicalCoords(el){
+    let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
+               el.classList.contains("castle") ? castleSize : 1
+    let offset = (grid * size - el.offsetWidth) / 2
+    let tileX = Math.round((parseFloat(el.style.left) - offset) / grid)
+    let tileY = Math.round((parseFloat(el.style.top)  - offset) / grid)
+    return { x: tileX, y: mapTilesY - tileY - size }
+}
+
+function applyLogicalPosition(el, logicalX, logicalY){
+    let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
+               el.classList.contains("castle") ? castleSize : 1
+    let offset = (grid * size - el.offsetWidth) / 2
+    el.style.left = logicalX * grid + offset + "px"
+    el.style.top  = (mapTilesY - logicalY - size) * grid + offset + "px"
+}
+
+/* =========================================================
    UI ACTIONS
    ---------------------------------------------------------
    Functions triggered by UI buttons
@@ -462,6 +497,7 @@ function setTrap(t, btn=null){
 
 // Cancel button
 document.getElementById("castleCancelBtn").addEventListener("click", () => {
+    castleDialog.classList.remove("edit-mode")
     castleDialog.close()
 })
 
@@ -479,6 +515,10 @@ castleForm.addEventListener("submit", (e) => {
         editTarget.dataset.name = name
         editTarget.dataset.power = power
         editTarget.dataset.trap = trap
+
+        let newX = parseInt(document.getElementById("castleCoordX").value) - originX
+        let newY = parseInt(document.getElementById("castleCoordY").value) - originY
+        applyLogicalPosition(editTarget, newX, newY)
 
         editTarget.innerHTML = `
 <div class="castle-name">${name}</div>
@@ -502,6 +542,7 @@ castleForm.addEventListener("submit", (e) => {
     }
 
     castleDialog.close()
+    castleDialog.classList.remove("edit-mode")
 
 })
 
@@ -576,18 +617,36 @@ function makeDraggable(el){
 
     el.addEventListener("dblclick",()=>{
 
-        if(!el.classList.contains("castle")) return
+        if(el.classList.contains("castle")){
 
-        editTarget = el
+            editTarget = el
 
-        document.getElementById("castleName").value = el.dataset.name
-        document.getElementById("castlePower").value = el.dataset.power
-        setTrap(el.dataset.trap || "F")
+            document.getElementById("castleName").value = el.dataset.name
+            document.getElementById("castlePower").value = el.dataset.power
+            setTrap(el.dataset.trap || "F")
 
-        castleDialogTitle.textContent = "Edit castle"
-        castleAddBtn.textContent = "Update"
+            const coords = getLogicalCoords(el)
+            document.getElementById("castleCoordX").value = originX + coords.x
+            document.getElementById("castleCoordY").value = originY + coords.y
 
-        castleDialog.showModal()
+            castleDialogTitle.textContent = "Edit castle"
+            castleAddBtn.textContent = "Update"
+            castleDialog.classList.add("edit-mode")
+            castleDialog.showModal()
+
+        } else {
+
+            let type = el.classList.contains("banner") ? "Banner" :
+                       el.classList.contains("plainshq") ? "Plains HQ" : "Trap"
+
+            const coords = getLogicalCoords(el)
+            document.getElementById("posDialogTitle").textContent = type + " position"
+            document.getElementById("posX").value = originX + coords.x
+            document.getElementById("posY").value = originY + coords.y
+            posDialogTarget = el
+            document.getElementById("posDialog").showModal()
+
+        }
 
     })
 
@@ -818,9 +877,13 @@ function updatePlayerList(){
             document.getElementById("castlePower").value = castle.dataset.power
             setTrap(castle.dataset.trap || "F")
 
+            const coords = getLogicalCoords(castle)
+            document.getElementById("castleCoordX").value = originX + coords.x
+            document.getElementById("castleCoordY").value = originY + coords.y
+
             castleDialogTitle.textContent = "Edit castle"
             castleAddBtn.textContent = "Update"
-
+            castleDialog.classList.add("edit-mode")
             castleDialog.showModal()
 
         })

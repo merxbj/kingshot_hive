@@ -36,6 +36,17 @@
 
         <input type="hidden" id="castleTrap" value="F">
 
+        <div id="castleCoords">
+            <label>
+                X
+                <input type="number" id="castleCoordX" value="0">
+            </label>
+            <label>
+                Y
+                <input type="number" id="castleCoordY" value="0">
+            </label>
+        </div>
+
         <div class="dialog-buttons">
             <button id="castleAddBtn" value="ok">Add</button>
             <button type="button" id="castleCancelBtn">Cancel</button>
@@ -52,6 +63,27 @@
     <div class="dialog-buttons">
         <button id="deleteConfirm">Delete</button>
         <button id="deleteCancel">Cancel</button>
+    </div>
+
+</dialog>
+
+<dialog id="posDialog">
+
+    <h3 id="posDialogTitle">Edit position</h3>
+
+    <label>
+        X
+        <input type="number" id="posX" value="0">
+    </label>
+
+    <label>
+        Y
+        <input type="number" id="posY" value="0">
+    </label>
+
+    <div class="dialog-buttons">
+        <button onclick="savePosDialog()">Save</button>
+        <button id="posCancelBtn">Cancel</button>
     </div>
 
 </dialog>
