@@ -82,6 +82,31 @@ function trapOffset(){
     return (grid * trapSize - trap1.offsetWidth) / 2
 }
 
+function buildAxes(){
+
+    const tilesX = Math.round(map.offsetWidth  / grid)
+    const tilesY = Math.round(map.offsetHeight / grid)
+
+    const axisX = document.getElementById("axisX")
+    const axisY = document.getElementById("axisY")
+
+    axisX.innerHTML = ""
+    axisY.innerHTML = ""
+
+    for(let i = 0; i < tilesX; i++){
+        const d = document.createElement("div")
+        d.textContent = i
+        axisX.appendChild(d)
+    }
+
+    for(let i = 0; i < tilesY; i++){
+        const d = document.createElement("div")
+        d.textContent = i
+        axisY.appendChild(d)
+    }
+
+}
+
 function positionTraps(){
 
     let offset = trapOffset()
@@ -94,7 +119,10 @@ function positionTraps(){
 
 }
 
-window.addEventListener("load", positionTraps)
+window.addEventListener("load", function(){
+    buildAxes()
+    positionTraps()
+})
 
 /* =========================================================
    OBJECT CREATION
