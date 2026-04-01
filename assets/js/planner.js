@@ -420,6 +420,67 @@ function applyLogicalPosition(el, logicalX, logicalY){
 }
 
 /* =========================================================
+   TILE CONTEXT MENU
+========================================================= */
+
+let contextMenuTileX = 0
+let contextMenuTileY = 0
+
+const tileContextMenu = document.getElementById("tileContextMenu")
+
+map.addEventListener("contextmenu", (e)=>{
+    e.preventDefault()
+    const rect = map.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / zoom
+    const y = (e.clientY - rect.top)  / zoom
+    contextMenuTileX = Math.floor(x / grid)
+    contextMenuTileY = Math.floor(y / grid)
+    tileContextMenu.style.left = e.clientX + "px"
+    tileContextMenu.style.top  = e.clientY + "px"
+    tileContextMenu.classList.add("visible")
+})
+
+document.addEventListener("click", ()=>{
+    tileContextMenu.classList.remove("visible")
+})
+
+document.addEventListener("contextmenu", (e)=>{
+    if(!e.target.closest("#map")){
+        tileContextMenu.classList.remove("visible")
+    }
+})
+
+function contextMenuAdd(type){
+    tileContextMenu.classList.remove("visible")
+    const cssX = contextMenuTileX * grid
+    const cssY = contextMenuTileY * grid
+    if(type === "castle"){
+        editTarget = null
+        castleForm.reset()
+        castleDialogTitle.textContent = "New castle"
+        castleAddBtn.textContent = "Add"
+        document.getElementById("castleCoordX").value = originX + contextMenuTileX
+        document.getElementById("castleCoordY").value = originY + (mapTilesY - castleSize - contextMenuTileY)
+        castleDialog.classList.add("edit-mode")
+        castleDialog.showModal()
+    } else if(type === "banner"){
+        createBanner(cssX, cssY)
+    } else if(type === "plainshq"){
+        createPlainsHQ(cssX, cssY)
+    } else if(type === "trap"){
+        const trap = document.createElement("div")
+        trap.className = "trap"
+        const num = document.querySelectorAll(".trap").length + 1
+        trap.textContent = "Trap " + num
+        map.appendChild(trap)
+        const offset = (grid * trapSize - trap.offsetWidth) / 2
+        trap.style.left = cssX + offset + "px"
+        trap.style.top  = cssY + offset + "px"
+        makeDraggable(trap)
+    }
+}
+
+/* =========================================================
    UI ACTIONS
    ---------------------------------------------------------
    Functions triggered by UI buttons
@@ -527,17 +588,26 @@ castleForm.addEventListener("submit", (e) => {
 
         updatePlayerList()
         applyCastleLevels()
-    }else{
+    } else {
 
-        createCastle(
-            spawnOffset * castleSize * grid,
-            0,
-            name,
-            power,
-            trap
-        )
+        const coordX = parseInt(document.getElementById("castleCoordX").value)
+        const coordY = parseInt(document.getElementById("castleCoordY").value)
+        const useTileCoords = castleDialog.classList.contains("edit-mode")
 
-        spawnOffset++
+        if(useTileCoords && !isNaN(coordX) && !isNaN(coordY)){
+            const cssX = (coordX - originX) * grid
+            const cssY = (mapTilesY - castleSize - (coordY - originY)) * grid
+            createCastle(cssX, cssY, name, power, trap)
+        } else {
+            createCastle(
+                spawnOffset * castleSize * grid,
+                0,
+                name,
+                power,
+                trap
+            )
+            spawnOffset++
+        }
     }
 
     castleDialog.close()

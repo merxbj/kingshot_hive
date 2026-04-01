@@ -557,6 +557,37 @@ dialog input{
 }
 
 /* =========================================================
+   CONTEXT MENU
+========================================================= */
+
+.context-menu{
+    position:fixed;
+    background:#2c2c2c;
+    border:1px solid #555;
+    border-radius:8px;
+    padding:4px 0;
+    z-index:1000;
+    display:none;
+    min-width:150px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
+}
+
+.context-menu.visible{
+    display:block;
+}
+
+.context-menu-item{
+    padding:8px 16px;
+    cursor:pointer;
+    font-size:14px;
+    text-align:left;
+}
+
+.context-menu-item:hover{
+    background:#3a3a3a;
+}
+
+/* =========================================================
    EXPORT MODE
 ========================================================= */
 
