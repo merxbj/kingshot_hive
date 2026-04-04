@@ -45,12 +45,21 @@ body{
 .axis-corner{
     grid-column:1;
     grid-row:1;
+    position:sticky;
+    top:0;
+    left:0;
+    z-index:11;
+    background:#1b1b1b;
 }
 
 .axis-x{
     grid-column:2;
     grid-row:1;
     display:flex;
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:#1b1b1b;
 }
 
 .axis-y{
@@ -58,6 +67,10 @@ body{
     grid-row:2;
     display:flex;
     flex-direction:column;
+    position:sticky;
+    left:0;
+    z-index:10;
+    background:#1b1b1b;
 }
 
 .axis-x div,
