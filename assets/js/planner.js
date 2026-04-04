@@ -55,6 +55,7 @@ let selected = null
 let offsetX = 0
 let offsetY = 0
 let hasDragged = false
+let dragCtrl = false
 
 /* SELECTION STATE */
 let activeObject = new Set()
@@ -301,9 +302,22 @@ function clearSelection(){
     updateTerritoryOverlay()
 }
 
-function selectMapObject(el){
+function selectMapObject(el, multi = false){
     const wasActive = el.classList.contains("active")
-    if(wasActive){
+
+    if(!multi){
+        // clear all others first, keeping toggle behaviour for the clicked element
+        document.querySelectorAll(".castle, .banner, .trap, .plainshq, .allianceresource, .water, .mountain").forEach(o => {
+            if(o !== el){ o.classList.remove("active"); activeObject.delete(o) }
+        })
+        document.querySelectorAll(".player").forEach(p => {
+            const nameEl = p.querySelector(".player-name")
+            if(!nameEl || nameEl.textContent !== el.dataset?.name) p.classList.remove("active")
+        })
+        clearAxisHighlights()
+    }
+
+    if(wasActive && multi){
         el.classList.remove("active")
         activeObject.delete(el)
         if(el.classList.contains("castle")){
@@ -312,7 +326,7 @@ function selectMapObject(el){
                 if(nameEl && nameEl.textContent === el.dataset.name) p.classList.remove("active")
             })
         }
-    } else {
+    } else if(!wasActive){
         activeObject.add(el)
         el.classList.add("active")
         if(el.classList.contains("castle")){
@@ -321,7 +335,18 @@ function selectMapObject(el){
                 if(nameEl && nameEl.textContent === el.dataset.name) p.classList.add("active")
             })
         }
+    } else if(!multi){
+        // single-click on already-active sole object: deselect
+        el.classList.remove("active")
+        activeObject.delete(el)
+        if(el.classList.contains("castle")){
+            document.querySelectorAll(".player").forEach(p => {
+                const nameEl = p.querySelector(".player-name")
+                if(nameEl && nameEl.textContent === el.dataset.name) p.classList.remove("active")
+            })
+        }
     }
+
     clearAxisHighlights()
     if(activeObject.size === 1) highlightAxesForElement([...activeObject][0])
     updateTerritoryOverlay()
@@ -961,6 +986,7 @@ function makeDraggable(el){
 
         selected = el
         hasDragged = false
+        dragCtrl = e.ctrlKey || e.metaKey
 
         let rect = el.getBoundingClientRect()
 
@@ -1030,7 +1056,7 @@ document.addEventListener("mouseup",()=>{
     updateTerritoryOverlay()
 
     if(!hasDragged){
-        selectMapObject(selected)
+        selectMapObject(selected, dragCtrl)
     } else if(activeObject.has(selected)){
         highlightAxesForElement(selected)
     }
