@@ -131,6 +131,35 @@
 
 </dialog>
 
+<dialog id="bulkEditDialog">
+
+    <h3>Bulk edit powers</h3>
+
+    <div class="bulk-rank-filter" id="bulkRankFilter">
+        <button class="rank-filter-btn active" onclick="setBulkRankFilter('All', this)">All</button>
+        <button class="rank-filter-btn" onclick="setBulkRankFilter('R5', this)">R5</button>
+        <button class="rank-filter-btn" onclick="setBulkRankFilter('R4', this)">R4</button>
+        <button class="rank-filter-btn" onclick="setBulkRankFilter('R3', this)">R3</button>
+        <button class="rank-filter-btn" onclick="setBulkRankFilter('R2', this)">R2</button>
+        <button class="rank-filter-btn" onclick="setBulkRankFilter('R1', this)">R1</button>
+    </div>
+
+    <div class="bulk-table-wrap">
+        <table class="bulk-table" id="bulkTable">
+            <thead>
+                <tr><th>Rank</th><th>Player</th><th>Power</th></tr>
+            </thead>
+            <tbody id="bulkTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="dialog-buttons">
+        <button onclick="applyBulkEdit()">Apply</button>
+        <button type="button" id="bulkCancelBtn">Cancel</button>
+    </div>
+
+</dialog>
+
 <h2>Kingshot Bear Trap Layout</h2>
 
 <div class="layout">
@@ -139,6 +168,7 @@
 
         <div class="player-header">
             <button onclick="exportPlayerList()">Export player list</button>
+            <button onclick="openBulkEdit()">Bulk edit</button>
         </div>
 
         <div class="rank-filter" id="rankFilter">

@@ -890,11 +890,102 @@ function setRank(r, btn=null){
 
 function setRankFilter(r, btn){
     rankFilter = r
-    document.querySelectorAll(".rank-filter-btn")
+    document.querySelectorAll("#rankFilter .rank-filter-btn")
         .forEach(b => b.classList.remove("active"))
     btn.classList.add("active")
     updatePlayerList()
 }
+
+/* =========================================================
+   BULK EDIT
+========================================================= */
+
+let bulkRankFilter = "All"
+
+function setBulkRankFilter(r, btn){
+    bulkRankFilter = r
+    document.querySelectorAll("#bulkRankFilter .rank-filter-btn")
+        .forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    populateBulkTable()
+}
+
+function openBulkEdit(){
+    bulkRankFilter = "All"
+    document.querySelectorAll("#bulkRankFilter .rank-filter-btn")
+        .forEach(b => b.classList.remove("active"))
+    const allBtn = document.querySelector("#bulkRankFilter .rank-filter-btn")
+    if(allBtn) allBtn.classList.add("active")
+    populateBulkTable()
+    document.getElementById("bulkEditDialog").showModal()
+}
+
+function populateBulkTable(){
+    const tbody = document.getElementById("bulkTableBody")
+    tbody.innerHTML = ""
+
+    let players = []
+    document.querySelectorAll(".castle").forEach(c => {
+        players.push({
+            el: c,
+            name: c.dataset.name || "",
+            power: c.dataset.power || "",
+            rank: c.dataset.rank || "R1",
+            value: parsePower(c.dataset.power)
+        })
+    })
+    players.sort((a, b) => b.value - a.value)
+
+    const filtered = bulkRankFilter === "All" ? players : players.filter(p => p.rank === bulkRankFilter)
+
+    filtered.forEach(p => {
+        const tr = document.createElement("tr")
+        tr.dataset.name = p.name
+        tr.innerHTML = `
+<td><span class="player-rank">${p.rank}</span></td>
+<td class="bulk-name">${p.name}</td>
+<td><input class="bulk-power-input" type="text" value="${p.power}" data-name="${p.name}"></td>
+`
+        tbody.appendChild(tr)
+    })
+
+    // Tab on last row's input wraps to first
+    const inputs = tbody.querySelectorAll("input")
+    inputs.forEach((inp, i) => {
+        inp.addEventListener("focus", () => inp.select())
+        inp.addEventListener("keydown", e => {
+            if(e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)){
+                e.preventDefault()
+                const next = inputs[i + 1]
+                if(next) next.focus()
+                else applyBulkEdit()
+            }
+        })
+    })
+}
+
+function applyBulkEdit(){
+    const inputs = document.querySelectorAll("#bulkTableBody .bulk-power-input")
+    inputs.forEach(inp => {
+        const name = inp.dataset.name
+        const power = inp.value.trim()
+        document.querySelectorAll(".castle").forEach(c => {
+            if(c.dataset.name === name){
+                c.dataset.power = power
+                const powerEl = c.querySelector(".castle-power")
+                if(powerEl) powerEl.textContent = power
+            }
+        })
+    })
+    applyCastleLevels()
+    updatePlayerList()
+    saveLayout()
+    document.getElementById("bulkEditDialog").close()
+}
+
+document.getElementById("bulkCancelBtn").addEventListener("click", () => {
+    document.getElementById("bulkEditDialog").close()
+})
 
 /* =========================================================
    CASTLE DIALOG HANDLING
