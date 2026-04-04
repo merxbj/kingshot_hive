@@ -158,7 +158,7 @@ body{
 }
 
 .castle[data-trap="M"] .castle-trap{ background:#43a047; }
-.castle[data-trap="E"] .castle-trap{ background: #1a1c1e; }
+.castle[data-trap="E"] .castle-trap{ background:#9c27b0; }
 .castle[data-trap="F"] .castle-trap{ background:#1e88e5; }
 
 .castle{
