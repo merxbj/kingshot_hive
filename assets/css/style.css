@@ -128,7 +128,7 @@ body{
 
 .castle-name{
     font-size:11px;
-    line-height:12px;
+    line-height:8px;
     font-weight:600;
     font-family:"Segoe UI", Arial, sans-serif;
     color:inherit;
@@ -410,6 +410,7 @@ body{
 
 .player-name{
     font-weight:600;
+    font-size: 12px;
 }
 
 .player:hover .player-name{
