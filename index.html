@@ -138,9 +138,17 @@
         <div class="toolbar-container">
 
             <div class="toolbar-group">
-                <button onclick="addCastle()">Add castle</button>
-                <button onclick="addBanner()">Add banner</button>
-                <button onclick="addPlainsHQ()">Add Plains HQ</button>
+                <div class="add-dropdown">
+                    <button onclick="toggleAddMenu()">Add &#9660;</button>
+                    <div id="addDropdownMenu" class="add-dropdown-menu">
+                        <div class="add-dropdown-item" onclick="addCastle();toggleAddMenu()">Castle</div>
+                        <div class="add-dropdown-item" onclick="addBanner();toggleAddMenu()">Banner</div>
+                        <div class="add-dropdown-item" onclick="addPlainsHQ();toggleAddMenu()">Plains HQ</div>
+                        <div class="add-dropdown-item" onclick="addAllianceResource();toggleAddMenu()">Alliance Resource</div>
+                        <div class="add-dropdown-item" onclick="addWater();toggleAddMenu()">Water</div>
+                        <div class="add-dropdown-item" onclick="addMountain();toggleAddMenu()">Mountain</div>
+                    </div>
+                </div>
             </div>
 
             <div class="toolbar-group">
@@ -188,6 +196,9 @@
     <div class="context-menu-item" onclick="contextMenuAdd('banner')">Add banner</div>
     <div class="context-menu-item" onclick="contextMenuAdd('trap')">Add trap</div>
     <div class="context-menu-item" onclick="contextMenuAdd('plainshq')">Add Plains HQ</div>
+    <div class="context-menu-item" onclick="contextMenuAdd('allianceresource')">Add Alliance Resource</div>
+    <div class="context-menu-item" onclick="contextMenuAdd('water')">Add Water</div>
+    <div class="context-menu-item" onclick="contextMenuAdd('mountain')">Add Mountain</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>

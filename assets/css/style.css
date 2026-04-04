@@ -177,14 +177,17 @@ body{
     user-select:none;
 }
 
-.castle,.trap,.plainshq{
+.castle,.trap,.plainshq,.allianceresource,.water,.mountain{
     cursor:grab;
     user-select:none;
 }
 
 .castle:active,
 .trap:active,
-.plainshq:active{
+.plainshq:active,
+.allianceresource:active,
+.water:active,
+.mountain:active{
     cursor:grabbing;
 }
 
@@ -206,6 +209,27 @@ body{
     color:white;
     text-align:center;
     pointer-events:none;
+}
+
+.allianceresource{
+    width:80px;
+    height:80px;
+    background:#6a1b9a;
+    border-radius:10px;
+    position:absolute;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:4;
+}
+
+.allianceresource-label{
+    font-size:12px;
+    font-weight:bold;
+    color:white;
+    text-align:center;
+    pointer-events:none;
+    line-height:1.2;
 }
 
 .dragging{
@@ -241,6 +265,43 @@ body{
 
 .toolbar-group input[type="file"]{
     height:36px;
+}
+
+/* Add dropdown menu */
+.add-dropdown{
+    position:relative;
+    display:inline-block;
+}
+
+.add-dropdown-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    background:#2c2c2c;
+    border:1px solid #555;
+    border-radius:6px;
+    min-width:160px;
+    z-index:100;
+    padding:4px 0;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+}
+
+.add-dropdown-menu.open{
+    display:block;
+}
+
+.add-dropdown-item{
+    padding:8px 14px;
+    cursor:pointer;
+    font-size:13px;
+    color:#ddd;
+    white-space:nowrap;
+}
+
+.add-dropdown-item:hover{
+    background:#3a3a3a;
+    color:#fff;
 }
 
 .toolbar{
@@ -421,6 +482,38 @@ body{
 
 .trap.active,
 .plainshq.active{
+    outline:3px solid #2e7d32;
+}
+
+.allianceresource.active{
+    outline:3px solid #2e7d32;
+}
+
+.water{
+    width:40px;
+    height:40px;
+    background:radial-gradient(circle at 35% 35%, #81d4fa, #0277bd);
+    border-radius:6px;
+    position:absolute;
+    z-index:3;
+}
+
+.water.active{
+    outline:3px solid #2e7d32;
+}
+
+.mountain{
+    width:40px;
+    height:40px;
+    background:linear-gradient(160deg, #ffffff 40%, #b0bec5 100%);
+    border:2px solid #90a4ae;
+    border-radius:6px;
+    position:absolute;
+    z-index:3;
+    box-sizing:border-box;
+}
+
+.mountain.active{
     outline:3px solid #2e7d32;
 }
 

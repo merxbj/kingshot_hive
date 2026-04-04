@@ -203,8 +203,8 @@ function clearAxisHighlights(){
 
 function highlightAxesForElement(el){
     let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
-               el.classList.contains("castle") ? castleSize : 1
-    let offset = (grid * size - el.offsetWidth) / 2
+               el.classList.contains("castle") || el.classList.contains("allianceresource") ? castleSize : 1
+    let offset = el.classList.contains("water") || el.classList.contains("mountain") ? 0 : (grid * size - el.offsetWidth) / 2
     let tileX = Math.round((parseFloat(el.style.left) - offset) / grid)
     let tileY = Math.round((parseFloat(el.style.top)  - offset) / grid)
 
@@ -219,7 +219,7 @@ function highlightAxesForElement(el){
 }
 
 function clearSelection(){
-    document.querySelectorAll(".castle, .banner, .trap, .plainshq").forEach(o => o.classList.remove("active"))
+    document.querySelectorAll(".castle, .banner, .trap, .plainshq, .allianceresource, .water, .mountain").forEach(o => o.classList.remove("active"))
     document.querySelectorAll(".player").forEach(p => p.classList.remove("active"))
     clearAxisHighlights()
     activeObject = null
@@ -249,7 +249,7 @@ function selectMapObject(el){
 
 function isTileOccupied(tileX, tileY, size){
 
-    const objects = document.querySelectorAll(".castle, .banner, .trap, .plainshq")
+    const objects = document.querySelectorAll(".castle, .banner, .trap, .plainshq, .allianceresource, .water, .mountain")
 
     let mapRect = map.getBoundingClientRect()
 
@@ -262,9 +262,8 @@ function isTileOccupied(tileX, tileY, size){
 
         let objSize =
             obj.classList.contains("trap") || obj.classList.contains("plainshq") ? trapSize :
-                obj.classList.contains("castle") ? castleSize :
+                    obj.classList.contains("castle") || obj.classList.contains("allianceresource") ? castleSize :
                     1
-
         let objTileX = Math.round(x / grid)
         let objTileY = Math.round(y / grid)
 
@@ -398,14 +397,87 @@ function createPlainsHQ(x=0,y=0){
     makeDraggable(hq)
 }
 
+function createAllianceResource(x=0, y=0){
+
+    let tileX = Math.round(x / grid)
+    let tileY = Math.round(y / grid)
+
+    if(isTileOccupied(tileX, tileY, castleSize)){
+        let free = findFreeTile(castleSize)
+        tileX = free.x
+        tileY = free.y
+    }
+
+    x = tileX * grid
+    y = tileY * grid
+
+    let ar = document.createElement("div")
+    ar.className = "allianceresource"
+
+    ar.innerHTML = `<div class="allianceresource-label">Alliance<br>Resource</div>`
+
+    map.appendChild(ar)
+
+    let offset = (grid * castleSize - ar.offsetWidth) / 2
+
+    ar.style.left = x + offset + "px"
+    ar.style.top  = y + offset + "px"
+
+    makeDraggable(ar)
+}
+
+function createWater(x=0, y=0){
+
+    let tileX = Math.round(x / grid)
+    let tileY = Math.round(y / grid)
+
+    if(isTileOccupied(tileX, tileY, 1)){
+        let free = findFreeTile(1)
+        tileX = free.x
+        tileY = free.y
+    }
+
+    let w = document.createElement("div")
+    w.className = "water"
+
+    map.appendChild(w)
+
+    w.style.left = tileX * grid + "px"
+    w.style.top  = tileY * grid + "px"
+
+    makeDraggable(w)
+}
+
+function createMountain(x=0, y=0){
+
+    let tileX = Math.round(x / grid)
+    let tileY = Math.round(y / grid)
+
+    if(isTileOccupied(tileX, tileY, 1)){
+        let free = findFreeTile(1)
+        tileX = free.x
+        tileY = free.y
+    }
+
+    let m = document.createElement("div")
+    m.className = "mountain"
+
+    map.appendChild(m)
+
+    m.style.left = tileX * grid + "px"
+    m.style.top  = tileY * grid + "px"
+
+    makeDraggable(m)
+}
+
 /* =========================================================
    COORDINATE HELPERS
 ========================================================= */
 
 function getLogicalCoords(el){
     let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
-               el.classList.contains("castle") ? castleSize : 1
-    let offset = (grid * size - el.offsetWidth) / 2
+               el.classList.contains("castle") || el.classList.contains("allianceresource") ? castleSize : 1
+    let offset = el.classList.contains("water") || el.classList.contains("mountain") ? 0 : (grid * size - el.offsetWidth) / 2
     let tileX = Math.round((parseFloat(el.style.left) - offset) / grid)
     let tileY = Math.round((parseFloat(el.style.top)  - offset) / grid)
     return { x: tileX, y: mapTilesY - tileY - size }
@@ -413,8 +485,8 @@ function getLogicalCoords(el){
 
 function applyLogicalPosition(el, logicalX, logicalY){
     let size = el.classList.contains("trap") || el.classList.contains("plainshq") ? trapSize :
-               el.classList.contains("castle") ? castleSize : 1
-    let offset = (grid * size - el.offsetWidth) / 2
+               el.classList.contains("castle") || el.classList.contains("allianceresource") ? castleSize : 1
+    let offset = el.classList.contains("water") || el.classList.contains("mountain") ? 0 : (grid * size - el.offsetWidth) / 2
     el.style.left = logicalX * grid + offset + "px"
     el.style.top  = (mapTilesY - logicalY - size) * grid + offset + "px"
 }
@@ -467,6 +539,12 @@ function contextMenuAdd(type){
         createBanner(cssX, cssY)
     } else if(type === "plainshq"){
         createPlainsHQ(cssX, cssY)
+    } else if(type === "allianceresource"){
+        createAllianceResource(cssX, cssY)
+    } else if(type === "water"){
+        createWater(cssX, cssY)
+    } else if(type === "mountain"){
+        createMountain(cssX, cssY)
     } else if(type === "trap"){
         const trap = document.createElement("div")
         trap.className = "trap"
@@ -519,6 +597,50 @@ function addPlainsHQ(){
     spawnOffset++
 
 }
+
+function addAllianceResource(){
+
+    createAllianceResource(
+        200 + spawnOffset * grid,
+        200
+    )
+
+    spawnOffset++
+
+}
+
+function addWater(){
+
+    createWater(
+        200 + spawnOffset * grid,
+        200
+    )
+
+    spawnOffset++
+
+}
+
+function addMountain(){
+
+    createMountain(
+        200 + spawnOffset * grid,
+        200
+    )
+
+    spawnOffset++
+
+}
+
+function toggleAddMenu(){
+    document.getElementById("addDropdownMenu").classList.toggle("open")
+}
+
+document.addEventListener("click", (e)=>{
+    if(!e.target.closest(".add-dropdown")){
+        const menu = document.getElementById("addDropdownMenu")
+        if(menu) menu.classList.remove("open")
+    }
+})
 
 function setZoom(value, btn){
 
@@ -667,13 +789,19 @@ function makeDraggable(el){
         if(
             el.classList.contains("castle") ||
             el.classList.contains("banner") ||
-            el.classList.contains("plainshq")
+            el.classList.contains("plainshq") ||
+            el.classList.contains("allianceresource") ||
+            el.classList.contains("water") ||
+            el.classList.contains("mountain")
         ){
 
             let type =
                 el.classList.contains("banner") ? "Banner" :
                     el.classList.contains("plainshq") ? "Plains HQ" :
-                        "Castle"
+                        el.classList.contains("allianceresource") ? "Alliance Resource" :
+                            el.classList.contains("water") ? "Water" :
+                                el.classList.contains("mountain") ? "Mountain" :
+                                    "Castle"
 
             deleteTarget = el
             document.getElementById("deleteText").textContent = type + " delete?"
@@ -706,8 +834,10 @@ function makeDraggable(el){
         } else {
 
             let type = el.classList.contains("banner") ? "Banner" :
-                       el.classList.contains("plainshq") ? "Plains HQ" : "Trap"
-
+                   el.classList.contains("plainshq") ? "Plains HQ" :
+                   el.classList.contains("allianceresource") ? "Alliance Resource" :
+                   el.classList.contains("water") ? "Water" :
+                   el.classList.contains("mountain") ? "Mountain" : "Trap"
             const coords = getLogicalCoords(el)
             document.getElementById("posDialogTitle").textContent = type + " position"
             document.getElementById("posX").value = originX + coords.x
@@ -761,7 +891,7 @@ document.addEventListener("mouseup",()=>{
 
     if(selected.classList.contains("trap") || selected.classList.contains("plainshq"))
         size = trapSize
-    else if(selected.classList.contains("banner"))
+    else if(selected.classList.contains("banner") || selected.classList.contains("water") || selected.classList.contains("mountain"))
         size = 1
     else
         size = castleSize
@@ -983,15 +1113,15 @@ function saveLayout(){
 
     let layout=[]
 
-    document.querySelectorAll(".castle,.banner,.trap,.plainshq").forEach(c=>{
+    document.querySelectorAll(".castle,.banner,.trap,.plainshq,.allianceresource,.water,.mountain").forEach(c=>{
 
         let size
 
         if(c.classList.contains("trap") || c.classList.contains("plainshq")) size=trapSize
-        else if(c.classList.contains("banner")) size=1
-        else size=castleSize
+        else if(c.classList.contains("castle") || c.classList.contains("allianceresource")) size=castleSize
+        else size=1
 
-        let offset=(grid*size-c.offsetWidth)/2
+        let offset = c.classList.contains("water") || c.classList.contains("mountain") ? 0 : (grid*size-c.offsetWidth)/2
 
         let tileX=Math.round((parseInt(c.style.left)-offset)/grid)
         let tileY=Math.round((parseInt(c.style.top)-offset)/grid)
@@ -1001,7 +1131,10 @@ function saveLayout(){
             type:c.classList.contains("trap")?"trap":
                 c.classList.contains("banner")?"banner":
                     c.classList.contains("plainshq")?"plainshq":
-                        "castle",
+                        c.classList.contains("allianceresource")?"allianceresource":
+                            c.classList.contains("water")?"water":
+                                c.classList.contains("mountain")?"mountain":
+                                    "castle",
             name:c.dataset.name||"",
             power:c.dataset.power||"",
             trap:c.dataset.trap||"F",
@@ -1057,7 +1190,7 @@ function loadLayout(){
     updateOriginLabel()
     buildAxes()
 
-    document.querySelectorAll(".castle,.banner,.plainshq").forEach(c=>c.remove())
+document.querySelectorAll(".castle,.banner,.plainshq,.allianceresource,.water,.mountain").forEach(c=>c.remove())
 
     layout.forEach(c=>{
 
@@ -1065,6 +1198,9 @@ function loadLayout(){
             createCastle(c.x*grid, (mapTilesY - castleSize - c.y)*grid, c.name, c.power, c.trap, true)
         if(c.type==="banner") createBanner(c.x*grid, (mapTilesY - 1 - c.y)*grid)
         if(c.type==="plainshq") createPlainsHQ(c.x*grid, (mapTilesY - trapSize - c.y)*grid)
+        if(c.type==="allianceresource") createAllianceResource(c.x*grid, (mapTilesY - castleSize - c.y)*grid)
+        if(c.type==="water") createWater(c.x*grid, (mapTilesY - 1 - c.y)*grid)
+        if(c.type==="mountain") createMountain(c.x*grid, (mapTilesY - 1 - c.y)*grid)
 
         if(c.type==="trap"){
 
