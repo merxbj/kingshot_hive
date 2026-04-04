@@ -557,29 +557,99 @@ function applyLogicalPosition(el, logicalX, logicalY){
 let contextMenuTileX = 0
 let contextMenuTileY = 0
 
-const tileContextMenu = document.getElementById("tileContextMenu")
+const tileContextMenu   = document.getElementById("tileContextMenu")
+const objectContextMenu = document.getElementById("objectContextMenu")
+
+let contextMenuTarget = null
+
+function hideAllContextMenus(){
+    tileContextMenu.classList.remove("visible")
+    objectContextMenu.classList.remove("visible")
+}
 
 map.addEventListener("contextmenu", (e)=>{
     e.preventDefault()
+    hideAllContextMenus()
+
     const rect = map.getBoundingClientRect()
     const x = (e.clientX - rect.left) / zoom
     const y = (e.clientY - rect.top)  / zoom
-    contextMenuTileX = Math.floor(x / grid)
-    contextMenuTileY = Math.floor(y / grid)
-    tileContextMenu.style.left = e.clientX + "px"
-    tileContextMenu.style.top  = e.clientY + "px"
-    tileContextMenu.classList.add("visible")
+
+    // check if right-click landed on a map object
+    const objectClasses = ["castle","banner","trap","plainshq","allianceresource","water","mountain"]
+    const hit = objectClasses.reduce((found, cls) => found || e.target.closest("." + cls), null)
+
+    if(hit){
+        contextMenuTarget = hit
+        objectContextMenu.style.left = e.clientX + "px"
+        objectContextMenu.style.top  = e.clientY + "px"
+        objectContextMenu.classList.add("visible")
+    } else {
+        contextMenuTarget = null
+        contextMenuTileX = Math.floor(x / grid)
+        contextMenuTileY = Math.floor(y / grid)
+        tileContextMenu.style.left = e.clientX + "px"
+        tileContextMenu.style.top  = e.clientY + "px"
+        tileContextMenu.classList.add("visible")
+    }
 })
 
 document.addEventListener("click", ()=>{
-    tileContextMenu.classList.remove("visible")
+    hideAllContextMenus()
 })
 
 document.addEventListener("contextmenu", (e)=>{
     if(!e.target.closest("#map")){
-        tileContextMenu.classList.remove("visible")
+        hideAllContextMenus()
     }
 })
+
+function objectContextEdit(){
+    hideAllContextMenus()
+    const el = contextMenuTarget
+    if(!el) return
+
+    if(el.classList.contains("castle")){
+        editTarget = el
+        document.getElementById("castleName").value = el.dataset.name
+        document.getElementById("castlePower").value = el.dataset.power
+        setTrap(el.dataset.trap || "F")
+        const coords = getLogicalCoords(el)
+        document.getElementById("castleCoordX").value = originX + coords.x
+        document.getElementById("castleCoordY").value = originY + coords.y
+        castleDialogTitle.textContent = "Edit castle"
+        castleAddBtn.textContent = "Update"
+        castleDialog.classList.add("edit-mode")
+        castleDialog.showModal()
+    } else {
+        let type = el.classList.contains("banner") ? "Banner" :
+                   el.classList.contains("plainshq") ? "Plains HQ" :
+                   el.classList.contains("allianceresource") ? "Alliance Resource" :
+                   el.classList.contains("water") ? "Water" :
+                   el.classList.contains("mountain") ? "Mountain" : "Trap"
+        const coords = getLogicalCoords(el)
+        document.getElementById("posDialogTitle").textContent = type + " position"
+        document.getElementById("posX").value = originX + coords.x
+        document.getElementById("posY").value = originY + coords.y
+        posDialogTarget = el
+        document.getElementById("posDialog").showModal()
+    }
+}
+
+function objectContextDelete(){
+    hideAllContextMenus()
+    const el = contextMenuTarget
+    if(!el) return
+    let type = el.classList.contains("banner") ? "Banner" :
+               el.classList.contains("plainshq") ? "Plains HQ" :
+               el.classList.contains("allianceresource") ? "Alliance Resource" :
+               el.classList.contains("water") ? "Water" :
+               el.classList.contains("mountain") ? "Mountain" :
+               el.classList.contains("castle") ? "Castle" : "Trap"
+    deleteTarget = el
+    document.getElementById("deleteText").textContent = type + " delete?"
+    deleteDialog.showModal()
+}
 
 function contextMenuAdd(type){
     tileContextMenu.classList.remove("visible")
@@ -838,74 +908,6 @@ function makeDraggable(el){
 
         selected.classList.add("dragging")
         selected.classList.add("drag-preview")
-
-    })
-
-
-    el.addEventListener("contextmenu",(e)=>{
-
-        e.preventDefault()
-
-        if(
-            el.classList.contains("castle") ||
-            el.classList.contains("banner") ||
-            el.classList.contains("plainshq") ||
-            el.classList.contains("allianceresource") ||
-            el.classList.contains("water") ||
-            el.classList.contains("mountain")
-        ){
-
-            let type =
-                el.classList.contains("banner") ? "Banner" :
-                    el.classList.contains("plainshq") ? "Plains HQ" :
-                        el.classList.contains("allianceresource") ? "Alliance Resource" :
-                            el.classList.contains("water") ? "Water" :
-                                el.classList.contains("mountain") ? "Mountain" :
-                                    "Castle"
-
-            deleteTarget = el
-            document.getElementById("deleteText").textContent = type + " delete?"
-            deleteDialog.showModal()
-
-        }
-
-    })
-
-
-    el.addEventListener("dblclick",()=>{
-
-        if(el.classList.contains("castle")){
-
-            editTarget = el
-
-            document.getElementById("castleName").value = el.dataset.name
-            document.getElementById("castlePower").value = el.dataset.power
-            setTrap(el.dataset.trap || "F")
-
-            const coords = getLogicalCoords(el)
-            document.getElementById("castleCoordX").value = originX + coords.x
-            document.getElementById("castleCoordY").value = originY + coords.y
-
-            castleDialogTitle.textContent = "Edit castle"
-            castleAddBtn.textContent = "Update"
-            castleDialog.classList.add("edit-mode")
-            castleDialog.showModal()
-
-        } else {
-
-            let type = el.classList.contains("banner") ? "Banner" :
-                   el.classList.contains("plainshq") ? "Plains HQ" :
-                   el.classList.contains("allianceresource") ? "Alliance Resource" :
-                   el.classList.contains("water") ? "Water" :
-                   el.classList.contains("mountain") ? "Mountain" : "Trap"
-            const coords = getLogicalCoords(el)
-            document.getElementById("posDialogTitle").textContent = type + " position"
-            document.getElementById("posX").value = originX + coords.x
-            document.getElementById("posY").value = originY + coords.y
-            posDialogTarget = el
-            document.getElementById("posDialog").showModal()
-
-        }
 
     })
 
