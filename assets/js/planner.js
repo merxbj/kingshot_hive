@@ -71,6 +71,62 @@ let originX = 0
 let originY = 0
 
 /* =========================================================
+   TERRITORY OVERLAY
+   ---------------------------------------------------------
+   Draws a light tile fill for areas covered by banners (7x7)
+   and Plains HQ (11x11).
+========================================================= */
+
+function updateTerritoryOverlay(){
+
+    const canvas = document.getElementById("territoryCanvas")
+    canvas.width  = mapTilesX * grid
+    canvas.height = mapTilesY * grid
+
+    const ctx = canvas.getContext("2d")
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = "rgba(255, 255, 255, 0.10)"
+
+    const covered = new Set()
+
+    document.querySelectorAll(".banner").forEach(b => {
+        const tileX = Math.round(parseFloat(b.style.left) / grid)
+        const tileY = Math.round(parseFloat(b.style.top)  / grid)
+        for(let dy = -3; dy <= 3; dy++){
+            for(let dx = -3; dx <= 3; dx++){
+                const tx = tileX + dx
+                const ty = tileY + dy
+                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY)
+                    covered.add(tx + "," + ty)
+            }
+        }
+    })
+
+    document.querySelectorAll(".plainshq").forEach(hq => {
+        const offset = (grid * trapSize - hq.offsetWidth) / 2
+        const tileX = Math.round((parseFloat(hq.style.left) - offset) / grid)
+        const tileY = Math.round((parseFloat(hq.style.top)  - offset) / grid)
+        // center of 3x3 HQ footprint
+        const cx = tileX + 1
+        const cy = tileY + 1
+        for(let dy = -5; dy <= 5; dy++){
+            for(let dx = -5; dx <= 5; dx++){
+                const tx = cx + dx
+                const ty = cy + dy
+                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY)
+                    covered.add(tx + "," + ty)
+            }
+        }
+    })
+
+    covered.forEach(key => {
+        const [tx, ty] = key.split(",").map(Number)
+        ctx.fillRect(tx * grid, ty * grid, grid, grid)
+    })
+
+}
+
+/* =========================================================
    MAP OBJECT REFERENCES
    ---------------------------------------------------------
    References to static elements already in the map
@@ -178,6 +234,7 @@ function savePosDialog(){
     let logicalY = parseInt(document.getElementById("posY").value) - originY
     applyLogicalPosition(posDialogTarget, logicalX, logicalY)
     if(posDialogTarget === activeObject) highlightAxesForElement(posDialogTarget)
+    updateTerritoryOverlay()
     posDialogTarget = null
     document.getElementById("posDialog").close()
 }
@@ -366,6 +423,7 @@ function createBanner(x = 0, y = 0){
     b.style.top  = y + offset + "px"
 
     makeDraggable(b)
+    updateTerritoryOverlay()
 }
 
 function createPlainsHQ(x=0,y=0){
@@ -395,6 +453,7 @@ function createPlainsHQ(x=0,y=0){
     hq.style.top  = y + offset + "px"
 
     makeDraggable(hq)
+    updateTerritoryOverlay()
 }
 
 function createAllianceResource(x=0, y=0){
@@ -750,6 +809,7 @@ deleteConfirm.addEventListener("click", () => {
     if(deleteTarget){
         deleteTarget.remove()
         updatePlayerList()
+        updateTerritoryOverlay()
     }
 
     deleteDialog.close()
@@ -903,6 +963,8 @@ document.addEventListener("mouseup",()=>{
 
     selected.classList.remove("drag-preview")
     selected.classList.remove("dragging")
+
+    updateTerritoryOverlay()
 
     if(!hasDragged){
         selectMapObject(selected)
@@ -1220,6 +1282,7 @@ document.querySelectorAll(".castle,.banner,.plainshq,.allianceresource,.water,.m
     })
     updatePlayerList()
     applyCastleLevels()
+    updateTerritoryOverlay()
 }
 
 function clearLayout(){
