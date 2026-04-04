@@ -57,7 +57,7 @@ let offsetY = 0
 let hasDragged = false
 
 /* SELECTION STATE */
-let activeObject = null
+let activeObject = new Set()
 
 /* OBJECT STATE */
 let id = 1
@@ -74,7 +74,7 @@ let originY = 0
    TERRITORY OVERLAY
    ---------------------------------------------------------
    Draws a light tile fill for areas covered by banners (7x7)
-   and Plains HQ (11x11).
+   and Plains HQ (13x13).
 ========================================================= */
 
 function updateTerritoryOverlay(){
@@ -85,19 +85,22 @@ function updateTerritoryOverlay(){
 
     const ctx = canvas.getContext("2d")
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = "rgba(255, 255, 255, 0.10)"
 
     const covered = new Set()
+    const highlighted = new Set()
 
     document.querySelectorAll(".banner").forEach(b => {
         const tileX = Math.round(parseFloat(b.style.left) / grid)
         const tileY = Math.round(parseFloat(b.style.top)  / grid)
+        const isActive = activeObject.has(b)
         for(let dy = -3; dy <= 3; dy++){
             for(let dx = -3; dx <= 3; dx++){
                 const tx = tileX + dx
                 const ty = tileY + dy
-                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY)
+                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY){
                     covered.add(tx + "," + ty)
+                    if(isActive) highlighted.add(tx + "," + ty)
+                }
             }
         }
     })
@@ -106,23 +109,35 @@ function updateTerritoryOverlay(){
         const offset = (grid * trapSize - hq.offsetWidth) / 2
         const tileX = Math.round((parseFloat(hq.style.left) - offset) / grid)
         const tileY = Math.round((parseFloat(hq.style.top)  - offset) / grid)
+        const isActive = activeObject.has(hq)
         // center of 3x3 HQ footprint
         const cx = tileX + 1
         const cy = tileY + 1
-        for(let dy = -5; dy <= 5; dy++){
-            for(let dx = -5; dx <= 5; dx++){
+        for(let dy = -6; dy <= 6; dy++){
+            for(let dx = -6; dx <= 6; dx++){
                 const tx = cx + dx
                 const ty = cy + dy
-                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY)
+                if(tx >= 0 && tx < mapTilesX && ty >= 0 && ty < mapTilesY){
                     covered.add(tx + "," + ty)
+                    if(isActive) highlighted.add(tx + "," + ty)
+                }
             }
         }
     })
 
+    ctx.fillStyle = "rgba(255, 255, 255, 0.10)"
     covered.forEach(key => {
         const [tx, ty] = key.split(",").map(Number)
         ctx.fillRect(tx * grid, ty * grid, grid, grid)
     })
+
+    if(highlighted.size){
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)"
+        highlighted.forEach(key => {
+            const [tx, ty] = key.split(",").map(Number)
+            ctx.fillRect(tx * grid, ty * grid, grid, grid)
+        })
+    }
 
 }
 
@@ -233,7 +248,7 @@ function savePosDialog(){
     let logicalX = parseInt(document.getElementById("posX").value) - originX
     let logicalY = parseInt(document.getElementById("posY").value) - originY
     applyLogicalPosition(posDialogTarget, logicalX, logicalY)
-    if(posDialogTarget === activeObject) highlightAxesForElement(posDialogTarget)
+    if(activeObject.has(posDialogTarget)) highlightAxesForElement(posDialogTarget)
     updateTerritoryOverlay()
     posDialogTarget = null
     document.getElementById("posDialog").close()
@@ -279,22 +294,34 @@ function clearSelection(){
     document.querySelectorAll(".castle, .banner, .trap, .plainshq, .allianceresource, .water, .mountain").forEach(o => o.classList.remove("active"))
     document.querySelectorAll(".player").forEach(p => p.classList.remove("active"))
     clearAxisHighlights()
-    activeObject = null
+    activeObject.clear()
+    updateTerritoryOverlay()
 }
 
 function selectMapObject(el){
     const wasActive = el.classList.contains("active")
-    clearSelection()
-    if(wasActive) return
-    activeObject = el
-    el.classList.add("active")
-    if(el.classList.contains("castle")){
-        document.querySelectorAll(".player").forEach(p => {
-            const nameEl = p.querySelector(".player-name")
-            if(nameEl && nameEl.textContent === el.dataset.name) p.classList.add("active")
-        })
+    if(wasActive){
+        el.classList.remove("active")
+        activeObject.delete(el)
+        if(el.classList.contains("castle")){
+            document.querySelectorAll(".player").forEach(p => {
+                const nameEl = p.querySelector(".player-name")
+                if(nameEl && nameEl.textContent === el.dataset.name) p.classList.remove("active")
+            })
+        }
+    } else {
+        activeObject.add(el)
+        el.classList.add("active")
+        if(el.classList.contains("castle")){
+            document.querySelectorAll(".player").forEach(p => {
+                const nameEl = p.querySelector(".player-name")
+                if(nameEl && nameEl.textContent === el.dataset.name) p.classList.add("active")
+            })
+        }
     }
-    highlightAxesForElement(el)
+    clearAxisHighlights()
+    if(activeObject.size === 1) highlightAxesForElement([...activeObject][0])
+    updateTerritoryOverlay()
 }
 
 /* =========================================================
@@ -970,7 +997,7 @@ document.addEventListener("mouseup",()=>{
 
     if(!hasDragged){
         selectMapObject(selected)
-    } else if(selected === activeObject){
+    } else if(activeObject.has(selected)){
         highlightAxesForElement(selected)
     }
 
