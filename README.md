@@ -1,8 +1,8 @@
-# Kingshot Bear Trap Planner
+# Kingshot Hive Planner
 
-A visual planning tool for **Kingshot alliance trap events**.
+A visual planning tool for **Kingshot alliance hive and trap events**.
 
-This planner helps organize player positioning around bear traps and plains HQ during events by providing a grid-based drag & drop map with power-based player analysis.
+This planner helps organize player and building positioning on a fully configurable grid map, with power-based player analysis, territory overlays, and flexible layout management.
 
 ---
 
@@ -26,11 +26,19 @@ This planner helps organize player positioning around bear traps and plains HQ d
   - Banners
   - Plains HQ
   - Bear traps
+  - Alliance Resources
+  - Water tiles
+  - Mountain tiles
+- **Territory overlay** — banners project a 7×7 covered area, Plains HQ projects an 11×11 covered area, visualised as a light overlay on the map
+- **Configurable map** — set custom width, height, and coordinate origin via Map Settings
+- **X/Y coordinate axes** with origin offset (Y-axis points up)
+- Click any object to **select** it and highlight its logical coordinates on the axes
+- **Right-click context menu** — on an empty tile: add any object type; on an occupied tile: Edit or Delete
 - **Automatic player power analysis**
 - Player list sorted by strength
 - Visual **power tier color system**
 - Trap assignment indicator on castles
-- Highlight player ↔ castle selection
+- Highlight player ↔ castle selection; click a player to scroll the map to their castle
 - Save / load layout locally
 - Export / import layout JSON
 - Export player list to CSV
@@ -62,11 +70,46 @@ Castles and player list entries are automatically colored based on this tier.
 ### Mouse
 
 | Action | Result |
-|------|------|
+|--------|--------|
 | Drag | Move objects |
-| Double click castle | Edit player |
-| Right click | Delete object |
-| Click player | Highlight castle |
+| Right-click (empty tile) | Open add-object menu |
+| Right-click (object) | Edit or Delete |
+| Click player in list | Scroll map to their castle |
+
+### Toolbar
+
+| Button | Result |
+|--------|--------|
+| **Add ▾** | Dropdown to add any object type |
+| **Map settings** | Configure width, height, and origin |
+| **Save / Load layout** | Persist to browser localStorage |
+| **Export / Import layout** | JSON file |
+| **Export player list** | CSV file |
+| **Export image** | PNG screenshot of the map |
+| **75% … 200%** | Zoom levels |
+
+---
+
+## Map Objects
+
+| Object | Size | Notes |
+|--------|------|-------|
+| Castle | 2×2 | Holds player name, power, trap assignment |
+| Banner | 1×1 | Projects 7×7 territory |
+| Plains HQ | 3×3 | Projects 11×11 territory |
+| Alliance Resource | 2×2 | No special attributes |
+| Bear Trap | 3×3 | Two traps maximum |
+| Water | 1×1 | Terrain marker |
+| Mountain | 1×1 | Terrain marker |
+
+---
+
+## Coordinate System
+
+- Origin is configurable via **Map Settings**
+- X grows to the right, Y grows upward
+- Object coordinates refer to the **bottom-left tile** of the object's footprint
+- Axes are displayed around the map and update when origin or dimensions change
 
 ---
 
@@ -75,10 +118,22 @@ Castles and player list entries are automatically colored based on this tier.
 The planner supports multiple persistence options:
 
 - **Save layout** → browser localStorage
-- **Load layout**
-- **Export layout** → JSON
-- **Import layout** → JSON
+- **Load layout** → browser localStorage
+- **Export layout** → JSON file
+- **Import layout** → JSON file
 - **Export player list** → CSV
+
+Layout JSON format:
+```json
+{
+  "origin": { "x": 0, "y": 0 },
+  "dimensions": { "w": 40, "h": 25 },
+  "objects": [
+    { "type": "castle", "name": "PlayerName", "power": "150M", "trap": "T1", "x": 10, "y": 8 },
+    { "type": "banner", "name": "", "power": "", "trap": "F", "x": 5, "y": 5 }
+  ]
+}
+```
 
 ---
 
@@ -98,6 +153,7 @@ kingshot_hive
 │       └─ planner.js
 │
 └─ docs
+
     └─ planner.jpg
 ```
 
