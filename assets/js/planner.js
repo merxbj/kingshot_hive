@@ -264,6 +264,18 @@ window.addEventListener("load", function(){
     positionTraps()
 })
 
+window.addEventListener("load", loadLayout)
+
+window.addEventListener("load", function(){
+    const mapWrapper = document.querySelector(".map-wrapper")
+    const rect = trap1.getBoundingClientRect()
+    const wrapperRect = mapWrapper.getBoundingClientRect()
+    const cx = rect.left + rect.width  / 2 - wrapperRect.left
+    const cy = rect.top  + rect.height / 2 - wrapperRect.top
+    mapWrapper.scrollLeft += cx - mapWrapper.clientWidth  / 2
+    mapWrapper.scrollTop  += cy - mapWrapper.clientHeight / 2
+})
+
 map.addEventListener("click", (e)=>{
     if(e.target === map) clearSelection()
 })
@@ -1537,5 +1549,3 @@ async function exportScreenshot(){
 /* =========================================================
    INITIALIZATION
 ========================================================= */
-
-window.addEventListener("load", loadLayout)
