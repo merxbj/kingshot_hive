@@ -59,6 +59,9 @@ let hasDragged = false
 /* SELECTION STATE */
 let activeObject = new Set()
 
+/* RANK FILTER STATE */
+let rankFilter = "All"
+
 /* OBJECT STATE */
 let id = 1
 let spawnOffset = 0
@@ -377,7 +380,7 @@ function findFreeTile(size){
 
     return {x:0, y:0}
 }
-function createCastle(x=0,y=0,name="",power="0M", trap="F", skipList=false){
+function createCastle(x=0,y=0,name="",power="0M", trap="F", skipList=false, rank="R1"){
 
     // if requested position is occupied, find a free tile
     let tileX = Math.round(x / grid)
@@ -394,7 +397,8 @@ function createCastle(x=0,y=0,name="",power="0M", trap="F", skipList=false){
 
     let c=document.createElement("div")
     c.dataset.power = power
-    c.dataset.trap = trap      // ⭐ trap opslaan
+    c.dataset.trap = trap
+    c.dataset.rank = rank || "R1"
     c.className="castle"
 
     if(!name) name="Castle "+id
@@ -641,6 +645,7 @@ function objectContextEdit(){
         document.getElementById("castleName").value = el.dataset.name
         document.getElementById("castlePower").value = el.dataset.power
         setTrap(el.dataset.trap || "F")
+        setRank(el.dataset.rank || "R1")
         const coords = getLogicalCoords(el)
         document.getElementById("castleCoordX").value = originX + coords.x
         document.getElementById("castleCoordY").value = originY + coords.y
@@ -829,6 +834,31 @@ function setTrap(t, btn=null){
 
 }
 
+function setRank(r, btn=null){
+
+    document.getElementById("castleRank").value = r
+
+    document.querySelectorAll(".rank-select button")
+        .forEach(b => b.classList.remove("active"))
+
+    if(btn){
+        btn.classList.add("active")
+    } else {
+        document
+            .querySelector(`.rank-select button[onclick*="'${r}'"]`)
+            ?.classList.add("active")
+    }
+
+}
+
+function setRankFilter(r, btn){
+    rankFilter = r
+    document.querySelectorAll(".rank-filter-btn")
+        .forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    updatePlayerList()
+}
+
 /* =========================================================
    CASTLE DIALOG HANDLING
 ========================================================= */
@@ -847,12 +877,14 @@ castleForm.addEventListener("submit", (e) => {
     let name = document.getElementById("castleName").value
     let power = document.getElementById("castlePower").value || "0M"
     let trap = document.getElementById("castleTrap").value
+    let rank = document.getElementById("castleRank").value
 
     if(editTarget){
 
         editTarget.dataset.name = name
         editTarget.dataset.power = power
         editTarget.dataset.trap = trap
+        editTarget.dataset.rank = rank
 
         let newX = parseInt(document.getElementById("castleCoordX").value) - originX
         let newY = parseInt(document.getElementById("castleCoordY").value) - originY
@@ -875,14 +907,16 @@ castleForm.addEventListener("submit", (e) => {
         if(useTileCoords && !isNaN(coordX) && !isNaN(coordY)){
             const cssX = (coordX - originX) * grid
             const cssY = (mapTilesY - castleSize - (coordY - originY)) * grid
-            createCastle(cssX, cssY, name, power, trap)
+            createCastle(cssX, cssY, name, power, trap, false, rank)
         } else {
             createCastle(
                 spawnOffset * castleSize * grid,
                 0,
                 name,
                 power,
-                trap
+                trap,
+                false,
+                rank
             )
             spawnOffset++
         }
@@ -1107,14 +1141,17 @@ function updatePlayerList(){
             name: c.dataset.name,
             power: power,
             value: value,
-            level: level
+            level: level,
+            rank: c.dataset.rank || "R1"
         })
 
     })
 
     players.sort((a,b)=> b.value - a.value)
 
-    players.forEach(p=>{
+    const filtered = rankFilter === "All" ? players : players.filter(p => p.rank === rankFilter)
+
+    filtered.forEach(p=>{
 
         let el = document.createElement("div")
         let levelClass = p.level
@@ -1125,6 +1162,7 @@ function updatePlayerList(){
 
         el.innerHTML = `
 <div class="player-info">
+    <span class="player-rank">${p.rank}</span>
     <span class="player-name">${p.name}</span>
     <span class="player-power">${p.power}</span>
 </div>
@@ -1176,6 +1214,7 @@ function updatePlayerList(){
             document.getElementById("castleName").value = castle.dataset.name
             document.getElementById("castlePower").value = castle.dataset.power
             setTrap(castle.dataset.trap || "F")
+            setRank(castle.dataset.rank || "R1")
 
             const coords = getLogicalCoords(castle)
             document.getElementById("castleCoordX").value = originX + coords.x
@@ -1229,6 +1268,7 @@ function saveLayout(){
             name:c.dataset.name||"",
             power:c.dataset.power||"",
             trap:c.dataset.trap||"F",
+            rank:c.dataset.rank||"R1",
             x:tileX,
             y:logicalY
         })
@@ -1286,7 +1326,7 @@ document.querySelectorAll(".castle,.banner,.plainshq,.allianceresource,.water,.m
     layout.forEach(c=>{
 
         if(c.type==="castle")
-            createCastle(c.x*grid, (mapTilesY - castleSize - c.y)*grid, c.name, c.power, c.trap, true)
+            createCastle(c.x*grid, (mapTilesY - castleSize - c.y)*grid, c.name, c.power, c.trap, true, c.rank||"R1")
         if(c.type==="banner") createBanner(c.x*grid, (mapTilesY - 1 - c.y)*grid)
         if(c.type==="plainshq") createPlainsHQ(c.x*grid, (mapTilesY - trapSize - c.y)*grid)
         if(c.type==="allianceresource") createAllianceResource(c.x*grid, (mapTilesY - castleSize - c.y)*grid)

@@ -380,6 +380,36 @@ body{
     height:36px;
 }
 
+.rank-filter{
+    display:flex;
+    gap:4px;
+    justify-content:center;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+}
+
+.rank-filter-btn{
+    padding:4px 8px;
+    font-size:12px;
+    border-radius:6px;
+    background:#2c2c2c;
+    border:1px solid #555;
+    color:#ccc;
+    cursor:pointer;
+    min-width:32px;
+}
+
+.rank-filter-btn:hover{
+    background:#3a3a3a;
+    color:#fff;
+}
+
+.rank-filter-btn.active{
+    background:#2e7d32;
+    border-color:#4caf50;
+    color:#fff;
+}
+
 #playerList{
     width:260px;
     border:1px solid #333;
@@ -411,6 +441,17 @@ body{
 .player-name{
     font-weight:600;
     font-size: 12px;
+}
+
+.player-rank{
+    font-size:10px;
+    font-weight:700;
+    color:#aaa;
+    background:#1a1a1a;
+    border-radius:4px;
+    padding:1px 5px;
+    flex-shrink:0;
+    align-self:center;
 }
 
 .player:hover .player-name{
@@ -633,6 +674,25 @@ input[type="file"]:hover::file-selector-button{
 }
 
 .trap-select button.active{
+    background:#2e7d32;
+    border-color:#4caf50;
+}
+
+.rank-select{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:6px;
+}
+
+.rank-select button{
+    width:32px;
+    height:28px;
+    padding:0;
+    font-weight:600;
+}
+
+.rank-select button.active{
     background:#2e7d32;
     border-color:#4caf50;
 }

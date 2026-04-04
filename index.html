@@ -36,6 +36,18 @@
 
         <input type="hidden" id="castleTrap" value="F">
 
+        <label>Rank</label>
+
+        <div class="rank-select">
+            <button type="button" onclick="setRank('R1', this)">R1</button>
+            <button type="button" onclick="setRank('R2', this)">R2</button>
+            <button type="button" onclick="setRank('R3', this)" class="active">R3</button>
+            <button type="button" onclick="setRank('R4', this)">R4</button>
+            <button type="button" onclick="setRank('R5', this)">R5</button>
+        </div>
+
+        <input type="hidden" id="castleRank" value="R1">
+
         <div id="castleCoords">
             <label>
                 X
@@ -127,6 +139,15 @@
 
         <div class="player-header">
             <button onclick="exportPlayerList()">Export player list</button>
+        </div>
+
+        <div class="rank-filter" id="rankFilter">
+            <button class="rank-filter-btn active" onclick="setRankFilter('All', this)">All</button>
+            <button class="rank-filter-btn" onclick="setRankFilter('R5', this)">R5</button>
+            <button class="rank-filter-btn" onclick="setRankFilter('R4', this)">R4</button>
+            <button class="rank-filter-btn" onclick="setRankFilter('R3', this)">R3</button>
+            <button class="rank-filter-btn" onclick="setRankFilter('R2', this)">R2</button>
+            <button class="rank-filter-btn" onclick="setRankFilter('R1', this)">R1</button>
         </div>
 
         <div id="playerList"></div>
