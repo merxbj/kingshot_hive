@@ -441,15 +441,6 @@
       "y": 56
     },
     {
-      "type": "castle",
-      "name": "valka ama gizoss",
-      "power": "25.5M",
-      "trap": "F",
-      "rank": "R1",
-      "x": 56,
-      "y": 54
-    },
-    {
       "type": "mountain",
       "name": "",
       "power": "",
@@ -556,7 +547,7 @@
     {
       "type": "castle",
       "name": "Carol",
-      "power": "103.0M",
+      "power": "111.2M",
       "trap": "E",
       "rank": "R3",
       "x": 52,
@@ -565,7 +556,7 @@
     {
       "type": "castle",
       "name": "Lord Fox Silver",
-      "power": "120.4M",
+      "power": "139.7M",
       "trap": "E",
       "rank": "R3",
       "x": 54,
@@ -574,19 +565,10 @@
     {
       "type": "castle",
       "name": "Chief",
-      "power": "168.0M",
+      "power": "185.8M",
       "trap": "E",
       "rank": "R3",
       "x": 56,
-      "y": 52
-    },
-    {
-      "type": "castle",
-      "name": "ULUTURK",
-      "power": "22.6M",
-      "trap": "F",
-      "rank": "R3",
-      "x": 58,
       "y": 52
     },
     {
@@ -604,15 +586,6 @@
       "trap": "F",
       "x": 68,
       "y": 53
-    },
-    {
-      "type": "castle",
-      "name": "CrAzzYOssl29",
-      "power": "60.1M",
-      "trap": "F",
-      "rank": "R3",
-      "x": 49,
-      "y": 51
     },
     {
       "type": "banner",
@@ -673,7 +646,7 @@
     {
       "type": "castle",
       "name": "Grawrnet",
-      "power": "173.0M",
+      "power": "189.6M",
       "trap": "E",
       "rank": "R4",
       "x": 52,
@@ -682,7 +655,7 @@
     {
       "type": "castle",
       "name": "San Fernando",
-      "power": "172.0M",
+      "power": "189.6M",
       "trap": "E",
       "rank": "R4",
       "x": 54,
@@ -691,7 +664,7 @@
     {
       "type": "castle",
       "name": "howie",
-      "power": "182.3M",
+      "power": "220.7M",
       "trap": "E",
       "rank": "R3",
       "x": 56,
@@ -700,7 +673,7 @@
     {
       "type": "castle",
       "name": "Ninja",
-      "power": "184.8M",
+      "power": "228.8M",
       "trap": "E",
       "rank": "R3",
       "x": 58,
@@ -709,19 +682,10 @@
     {
       "type": "castle",
       "name": "Nelltonell",
-      "power": "146.1M",
+      "power": "167.7M",
       "trap": "E",
       "rank": "R3",
       "x": 60,
-      "y": 50
-    },
-    {
-      "type": "castle",
-      "name": "Twyztid ThriCe",
-      "power": "3.1M",
-      "trap": "F",
-      "rank": "R3",
-      "x": 62,
       "y": 50
     },
     {
@@ -735,7 +699,7 @@
     {
       "type": "castle",
       "name": "اااااااااااااااا",
-      "power": "166.2M",
+      "power": "192.0M",
       "trap": "E",
       "rank": "R3",
       "x": 50,
@@ -743,8 +707,8 @@
     },
     {
       "type": "castle",
-      "name": "DUDECALLMEDUDE",
-      "power": "173.9M",
+      "name": "Jessi",
+      "power": "196.8M",
       "trap": "E",
       "rank": "R3",
       "x": 52,
@@ -768,8 +732,8 @@
     },
     {
       "type": "castle",
-      "name": "Twyztid",
-      "power": "218.3M",
+      "name": "TwyƵtiD",
+      "power": "243.7M",
       "trap": "E",
       "rank": "R3",
       "x": 58,
@@ -778,19 +742,10 @@
     {
       "type": "castle",
       "name": "guvnor",
-      "power": "175.3M",
+      "power": "200.3M",
       "trap": "E",
       "rank": "R3",
       "x": 60,
-      "y": 48
-    },
-    {
-      "type": "castle",
-      "name": "Kowal",
-      "power": "30.5M",
-      "trap": "F",
-      "rank": "R1",
-      "x": 62,
       "y": 48
     },
     {
@@ -819,17 +774,8 @@
     },
     {
       "type": "castle",
-      "name": "ilayda13",
-      "power": "27.5M",
-      "trap": "F",
-      "rank": "R1",
-      "x": 48,
-      "y": 46
-    },
-    {
-      "type": "castle",
       "name": "Hmrc",
-      "power": "154.9M",
+      "power": "186.4M",
       "trap": "E",
       "rank": "R3",
       "x": 50,
@@ -837,8 +783,8 @@
     },
     {
       "type": "castle",
-      "name": "Jessi",
-      "power": "163.9M",
+      "name": "DUDECALLMEDUDE",
+      "power": "209.3M",
       "trap": "E",
       "rank": "R3",
       "x": 52,
@@ -855,7 +801,7 @@
     {
       "type": "castle",
       "name": "mexbik",
-      "power": "198.1M",
+      "power": "228.7M",
       "trap": "F",
       "rank": "R4",
       "x": 58,
@@ -864,10 +810,28 @@
     {
       "type": "castle",
       "name": "King Ali",
-      "power": "139.8M",
+      "power": "149.7M",
       "trap": "M",
       "rank": "R3",
       "x": 60,
+      "y": 46
+    },
+    {
+      "type": "castle",
+      "name": "TwyƵtiD ThriCe",
+      "power": "16.3M",
+      "trap": "F",
+      "rank": "R3",
+      "x": 62,
+      "y": 46
+    },
+    {
+      "type": "castle",
+      "name": "●●●●○○○○○■■■",
+      "power": "114.9M",
+      "trap": "E",
+      "rank": "R3",
+      "x": 70,
       "y": 46
     },
     {
@@ -888,8 +852,8 @@
     },
     {
       "type": "castle",
-      "name": "ilaydafarm",
-      "power": "17.5M",
+      "name": "BaNDaR2",
+      "power": "57.3M",
       "trap": "F",
       "rank": "R2",
       "x": 48,
@@ -898,7 +862,7 @@
     {
       "type": "castle",
       "name": "Elara",
-      "power": "132.0M",
+      "power": "145.0M",
       "trap": "E",
       "rank": "R3",
       "x": 50,
@@ -907,7 +871,7 @@
     {
       "type": "castle",
       "name": "mak",
-      "power": "122.1M",
+      "power": "141.1M",
       "trap": "F",
       "rank": "R3",
       "x": 52,
@@ -916,7 +880,7 @@
     {
       "type": "castle",
       "name": "ZzzZzzZzz",
-      "power": "172.9M",
+      "power": "194.3M",
       "trap": "E",
       "rank": "R3",
       "x": 54,
@@ -925,16 +889,16 @@
     {
       "type": "castle",
       "name": "Thrav",
-      "power": "170.3M",
+      "power": "189.3M",
       "trap": "E",
-      "rank": "R4",
+      "rank": "R5",
       "x": 56,
       "y": 44
     },
     {
       "type": "castle",
       "name": "bigdaddy",
-      "power": "189.0M",
+      "power": "207.1M",
       "trap": "E",
       "rank": "R3",
       "x": 58,
@@ -943,7 +907,7 @@
     {
       "type": "castle",
       "name": "LordRumpel",
-      "power": "158.5M",
+      "power": "168.7M",
       "trap": "E",
       "rank": "R3",
       "x": 60,
@@ -1014,6 +978,15 @@
       "y": 44
     },
     {
+      "type": "castle",
+      "name": "Goron201",
+      "power": "117.9M",
+      "trap": "F",
+      "rank": "R3",
+      "x": 62,
+      "y": 43
+    },
+    {
       "type": "banner",
       "name": "",
       "power": "",
@@ -1023,8 +996,26 @@
     },
     {
       "type": "castle",
+      "name": "ULUTÜRK'",
+      "power": "30.1M",
+      "trap": "F",
+      "rank": "R3",
+      "x": 48,
+      "y": 42
+    },
+    {
+      "type": "castle",
+      "name": "Trumptrain",
+      "power": "182.0M",
+      "trap": "E",
+      "rank": "R3",
+      "x": 50,
+      "y": 42
+    },
+    {
+      "type": "castle",
       "name": "TomTom",
-      "power": "114.8M",
+      "power": "132.5M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1033,7 +1024,7 @@
     {
       "type": "castle",
       "name": "N4STI3R",
-      "power": "123.5M",
+      "power": "148.9M",
       "trap": "E",
       "rank": "R3",
       "x": 54,
@@ -1042,7 +1033,7 @@
     {
       "type": "castle",
       "name": "Ossie the First",
-      "power": "208.6M",
+      "power": "236.3M",
       "trap": "F",
       "rank": "R4",
       "x": 56,
@@ -1050,11 +1041,20 @@
     },
     {
       "type": "castle",
-      "name": "BingLord",
-      "power": "160.2M",
-      "trap": "F",
-      "rank": "R3",
+      "name": "Angelo",
+      "power": "208.3M",
+      "trap": "E",
+      "rank": "R2",
       "x": 58,
+      "y": 42
+    },
+    {
+      "type": "castle",
+      "name": "Maczek",
+      "power": "16.3M",
+      "trap": "E",
+      "rank": "R3",
+      "x": 60,
       "y": 42
     },
     {
@@ -1084,25 +1084,25 @@
     {
       "type": "castle",
       "name": "Źuliet",
-      "power": "84.7M",
+      "power": "104.3M",
       "trap": "M",
-      "rank": "R1",
+      "rank": "R3",
       "x": 50,
       "y": 39
     },
     {
       "type": "castle",
       "name": "hoop",
-      "power": "133.3M",
+      "power": "148.1M",
       "trap": "M",
-      "rank": "R3",
+      "rank": "R2",
       "x": 52,
       "y": 39
     },
     {
       "type": "castle",
       "name": "Mrzero",
-      "power": "180.4M",
+      "power": "207.5M",
       "trap": "M",
       "rank": "R3",
       "x": 54,
@@ -1111,7 +1111,7 @@
     {
       "type": "castle",
       "name": "kumamoto",
-      "power": "176.7M",
+      "power": "185.5M",
       "trap": "M",
       "rank": "R3",
       "x": 56,
@@ -1120,7 +1120,7 @@
     {
       "type": "castle",
       "name": "edy80",
-      "power": "176.0M",
+      "power": "198.3M",
       "trap": "M",
       "rank": "R3",
       "x": 58,
@@ -1128,10 +1128,10 @@
     },
     {
       "type": "castle",
-      "name": "Jeddah 1234",
-      "power": "32.6M",
-      "trap": "F",
-      "rank": "R2",
+      "name": "Little Howie",
+      "power": "27.2M",
+      "trap": "E",
+      "rank": "R1",
       "x": 60,
       "y": 39
     },
@@ -1141,6 +1141,15 @@
       "power": "",
       "trap": "F",
       "x": 48,
+      "y": 38
+    },
+    {
+      "type": "castle",
+      "name": "KING M ALFATH R",
+      "power": "81.2M",
+      "trap": "F",
+      "rank": "R2",
+      "x": 62,
       "y": 38
     },
     {
@@ -1154,7 +1163,7 @@
     {
       "type": "castle",
       "name": "RrrrrBear",
-      "power": "154.5M",
+      "power": "179.4M",
       "trap": "M",
       "rank": "R3",
       "x": 50,
@@ -1163,7 +1172,7 @@
     {
       "type": "castle",
       "name": "SPAWN",
-      "power": "170.7M",
+      "power": "194.8M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1171,8 +1180,8 @@
     },
     {
       "type": "castle",
-      "name": "HulkChin",
-      "power": "252.2M",
+      "name": "Hulk 헐크 Holk",
+      "power": "285.5M",
       "trap": "M",
       "rank": "R3",
       "x": 54,
@@ -1181,7 +1190,7 @@
     {
       "type": "castle",
       "name": "N4STY",
-      "power": "207.6M",
+      "power": "244.4M",
       "trap": "F",
       "rank": "R4",
       "x": 56,
@@ -1190,7 +1199,7 @@
     {
       "type": "castle",
       "name": "owowo",
-      "power": "193.0M",
+      "power": "218.4M",
       "trap": "M",
       "rank": "R3",
       "x": 58,
@@ -1199,10 +1208,19 @@
     {
       "type": "castle",
       "name": "Polgas",
-      "power": "170.6M",
+      "power": "193.9M",
       "trap": "M",
       "rank": "R3",
       "x": 60,
+      "y": 37
+    },
+    {
+      "type": "castle",
+      "name": "ilayda13",
+      "power": "26.2M",
+      "trap": "F",
+      "rank": "R1",
+      "x": 64,
       "y": 37
     },
     {
@@ -1271,17 +1289,8 @@
     },
     {
       "type": "castle",
-      "name": "Jade Namikaze",
-      "power": "116.8M",
-      "trap": "M",
-      "rank": "R3",
-      "x": 48,
-      "y": 35
-    },
-    {
-      "type": "castle",
       "name": "Shanomack",
-      "power": "196.6M",
+      "power": "213.7M",
       "trap": "E",
       "rank": "R3",
       "x": 50,
@@ -1290,7 +1299,7 @@
     {
       "type": "castle",
       "name": "Svasth123",
-      "power": "177.4M",
+      "power": "215.7M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1315,7 +1324,7 @@
     {
       "type": "castle",
       "name": "kAiRoS",
-      "power": "183.8M",
+      "power": "209.3M",
       "trap": "M",
       "rank": "R4",
       "x": 58,
@@ -1324,7 +1333,7 @@
     {
       "type": "castle",
       "name": "ShadowSkill",
-      "power": "155.2M",
+      "power": "183.4M",
       "trap": "M",
       "rank": "R3",
       "x": 60,
@@ -1333,7 +1342,7 @@
     {
       "type": "castle",
       "name": "D C",
-      "power": "80.5M",
+      "power": "104.8M",
       "trap": "M",
       "rank": "R3",
       "x": 62,
@@ -1341,10 +1350,10 @@
     },
     {
       "type": "castle",
-      "name": "HaciAbi",
-      "power": "1.3M",
+      "name": "ilaydafarm",
+      "power": "17.5M",
       "trap": "F",
-      "rank": "R1",
+      "rank": "R2",
       "x": 64,
       "y": 35
     },
@@ -1358,17 +1367,8 @@
     },
     {
       "type": "castle",
-      "name": "Njami25",
-      "power": "76.5M",
-      "trap": "E",
-      "rank": "R3",
-      "x": 48,
-      "y": 33
-    },
-    {
-      "type": "castle",
       "name": "SuperNova",
-      "power": "145.6M",
+      "power": "160.0M",
       "trap": "M",
       "rank": "R3",
       "x": 50,
@@ -1377,7 +1377,7 @@
     {
       "type": "castle",
       "name": "Darth Vader",
-      "power": "184.4M",
+      "power": "207.1M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1394,7 +1394,7 @@
     {
       "type": "castle",
       "name": "自己人",
-      "power": "191.4M",
+      "power": "218.2M",
       "trap": "M",
       "rank": "R4",
       "x": 58,
@@ -1403,7 +1403,7 @@
     {
       "type": "castle",
       "name": "Lord Eman",
-      "power": "202.5M",
+      "power": "225.3M",
       "trap": "M",
       "rank": "R3",
       "x": 60,
@@ -1412,7 +1412,7 @@
     {
       "type": "castle",
       "name": "Jitendra India",
-      "power": "133.0M",
+      "power": "148.1M",
       "trap": "F",
       "rank": "R3",
       "x": 62,
@@ -1436,8 +1436,17 @@
     },
     {
       "type": "castle",
+      "name": "Jade Namikaze",
+      "power": "134.9M",
+      "trap": "M",
+      "rank": "R3",
+      "x": 50,
+      "y": 31
+    },
+    {
+      "type": "castle",
       "name": "Chema",
-      "power": "163.7M",
+      "power": "190.6M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1446,16 +1455,16 @@
     {
       "type": "castle",
       "name": "Golly",
-      "power": "286.8M",
+      "power": "319.6M",
       "trap": "M",
-      "rank": "R5",
+      "rank": "R4",
       "x": 54,
       "y": 31
     },
     {
       "type": "castle",
-      "name": "yoon",
-      "power": "212.2M",
+      "name": "joy 조이 yoon",
+      "power": "239.2M",
       "trap": "M",
       "rank": "R3",
       "x": 56,
@@ -1464,7 +1473,7 @@
     {
       "type": "castle",
       "name": "power 1",
-      "power": "159.8M",
+      "power": "181.9M",
       "trap": "M",
       "rank": "R3",
       "x": 58,
@@ -1473,19 +1482,10 @@
     {
       "type": "castle",
       "name": "velgiia",
-      "power": "137.3M",
+      "power": "162.6M",
       "trap": "M",
       "rank": "R3",
       "x": 60,
-      "y": 31
-    },
-    {
-      "type": "castle",
-      "name": "Vandalart",
-      "power": "117.0M",
-      "trap": "E",
-      "rank": "R3",
-      "x": 62,
       "y": 31
     },
     {
@@ -1554,8 +1554,17 @@
     },
     {
       "type": "castle",
+      "name": "Njami25",
+      "power": "83.7M",
+      "trap": "E",
+      "rank": "R3",
+      "x": 50,
+      "y": 29
+    },
+    {
+      "type": "castle",
       "name": "knight_Thunder",
-      "power": "133.3M",
+      "power": "150.5M",
       "trap": "M",
       "rank": "R3",
       "x": 52,
@@ -1563,9 +1572,9 @@
     },
     {
       "type": "castle",
-      "name": "Trumptrain",
-      "power": "172.0M",
-      "trap": "E",
+      "name": "BingLord",
+      "power": "177.9M",
+      "trap": "F",
       "rank": "R3",
       "x": 54,
       "y": 29
@@ -1573,7 +1582,7 @@
     {
       "type": "castle",
       "name": "YAZiEL",
-      "power": "123.1M",
+      "power": "149.5M",
       "trap": "F",
       "rank": "R3",
       "x": 56,
@@ -1582,7 +1591,7 @@
     {
       "type": "castle",
       "name": "Bombardir08",
-      "power": "145.6M",
+      "power": "157.3M",
       "trap": "E",
       "rank": "R3",
       "x": 58,
@@ -1611,6 +1620,15 @@
       "trap": "F",
       "x": 64,
       "y": 28
+    },
+    {
+      "type": "castle",
+      "name": "Vandalart",
+      "power": "135.9M",
+      "trap": "E",
+      "rank": "R3",
+      "x": 52,
+      "y": 27
     },
     {
       "type": "banner",
