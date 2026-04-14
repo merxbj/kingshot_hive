@@ -18,6 +18,10 @@
    grid size, object sizes and map dimensions
 ========================================================= */
 
+// API base URL — empty string means same origin (single-binary deployment).
+// For static deployments this can be injected through window.__API_BASE__.
+const API_BASE = (window.__API_BASE__ || "").replace(/\/+$/, "")
+
 const grid = 40
 const castleSize = 2
 const trapSize = 3
@@ -264,7 +268,24 @@ window.addEventListener("load", function(){
     positionTraps()
 })
 
-window.addEventListener("load", loadLayout)
+window.addEventListener("load", async function(){
+    const params = new URLSearchParams(window.location.search)
+    const layoutId = params.get("layout")
+    if(layoutId){
+        try {
+            const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(layoutId))
+            if(r.ok){
+                const layout = await r.json()
+                localStorage.setItem("kingshotLayout", layout.data)
+                loadLayout()
+                return
+            }
+        } catch(e) {
+            console.error("Failed to load shared layout:", e)
+        }
+    }
+    loadLayout()
+})
 
 window.addEventListener("load", function(){
     const mapWrapper = document.querySelector(".map-wrapper")
@@ -1556,20 +1577,32 @@ async function shareLayout(){
         return
     }
 
-    let blob = new Blob([json], {type:"application/json"})
+    try {
+        const name = prompt("Name this layout for sharing:", "My Layout")
+        if(!name) return
 
-    let form = new FormData()
-    form.append("reqtype","fileupload")
-    form.append("fileToUpload", blob, "layout.json")
+        const password = prompt("Set a password to protect edits (leave empty for none):", "")
 
-    let r = await fetch("https://catbox.moe/user/api.php",{
-        method:"POST",
-        body:form
-    })
+        const r = await fetch(API_BASE + "/api/layouts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name, data: json, password: password || "" })
+        })
 
-    let url = await r.text()
+        if(!r.ok){
+            alert("Failed to save layout to server")
+            return
+        }
 
-    prompt("Share this link:", url)
+        const layout = await r.json()
+        const shareUrl = location.origin + location.pathname + "?layout=" + layout.id
+
+        prompt("Share this link:", shareUrl)
+
+    } catch(e) {
+        console.error("Share failed:", e)
+        alert("Failed to share layout. Is the server running?")
+    }
 }
 function exportPlayerList(){
 
@@ -1635,6 +1668,173 @@ async function exportScreenshot(){
 
         URL.revokeObjectURL(url)
     })
+}
+
+/* =========================================================
+   SERVER LAYOUTS
+   ---------------------------------------------------------
+   Functions for interacting with the backend API
+========================================================= */
+
+async function listServerLayouts(){
+    try {
+        const r = await fetch(API_BASE + "/api/layouts")
+        if(!r.ok) return []
+        return await r.json()
+    } catch(e) {
+        console.error("Failed to list server layouts:", e)
+        return []
+    }
+}
+
+async function loadFromServer(id){
+    try {
+        const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id))
+        if(!r.ok){
+            alert("Failed to load layout")
+            return
+        }
+        const layout = await r.json()
+        localStorage.setItem("kingshotLayout", layout.data)
+        loadLayout()
+        document.getElementById("serverLayoutsDialog").close()
+    } catch(e) {
+        console.error("Failed to load from server:", e)
+        alert("Failed to load layout from server")
+    }
+}
+
+async function saveToServer(){
+    const json = localStorage.getItem("kingshotLayout")
+    if(!json){
+        alert("No layout saved locally. Save your layout first.")
+        return
+    }
+
+    const name = document.getElementById("serverSaveName").value.trim()
+    if(!name){
+        alert("Please enter a name")
+        return
+    }
+
+    const password = document.getElementById("serverSavePassword").value
+
+    try {
+        const r = await fetch(API_BASE + "/api/layouts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name, data: json, password: password || "" })
+        })
+
+        if(!r.ok){
+            alert("Failed to save layout to server")
+            return
+        }
+
+        const layout = await r.json()
+        alert("Layout saved! ID: " + layout.id)
+        document.getElementById("serverSaveName").value = ""
+        document.getElementById("serverSavePassword").value = ""
+        document.getElementById("saveToServerDialog").close()
+
+    } catch(e) {
+        console.error("Save to server failed:", e)
+        alert("Failed to save to server. Is the server running?")
+    }
+}
+
+async function updateOnServer(id){
+    const json = localStorage.getItem("kingshotLayout")
+    if(!json){
+        alert("No layout saved locally")
+        return
+    }
+
+    const password = prompt("Enter password (leave empty if none):", "")
+
+    try {
+        const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: json, password: password || "" })
+        })
+
+        if(r.status === 403){
+            alert("Incorrect password")
+            return
+        }
+        if(!r.ok){
+            alert("Failed to update layout")
+            return
+        }
+
+        alert("Layout updated!")
+    } catch(e) {
+        console.error("Update failed:", e)
+        alert("Failed to update layout on server")
+    }
+}
+
+async function deleteFromServer(id){
+    if(!confirm("Delete this layout from the server?")) return
+
+    const password = prompt("Enter password (leave empty if none):", "")
+
+    try {
+        const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id), {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: password || "" })
+        })
+
+        if(r.status === 403){
+            alert("Incorrect password")
+            return
+        }
+        if(!r.ok){
+            alert("Failed to delete layout")
+            return
+        }
+
+        openServerLayouts()
+    } catch(e) {
+        console.error("Delete failed:", e)
+        alert("Failed to delete layout from server")
+    }
+}
+
+async function openServerLayouts(){
+    const tbody = document.getElementById("serverLayoutsBody")
+    tbody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>"
+    document.getElementById("serverLayoutsDialog").showModal()
+
+    const layouts = await listServerLayouts()
+
+    if(layouts.length === 0){
+        tbody.innerHTML = "<tr><td colspan='5'>No layouts found on server</td></tr>"
+        return
+    }
+
+    tbody.innerHTML = ""
+    layouts.forEach(l => {
+        const tr = document.createElement("tr")
+        const date = new Date(l.updated_at).toLocaleDateString()
+        tr.innerHTML = `
+            <td>${l.name}</td>
+            <td>${l.has_password ? "🔒" : ""}</td>
+            <td>${date}</td>
+            <td>
+                <button onclick="loadFromServer('${l.id}')">Load</button>
+                <button onclick="updateOnServer('${l.id}')">Update</button>
+                <button onclick="deleteFromServer('${l.id}')">Delete</button>
+            </td>
+        `
+        tbody.appendChild(tr)
+    })
+}
+
+function openSaveToServer(){
+    document.getElementById("saveToServerDialog").showModal()
 }
 
 /* =========================================================

@@ -854,3 +854,49 @@ dialog input{
 .export-mode .castle{
     border:1px solid rgba(255,255,255,0.3);
 }
+
+/* =========================================================
+   SERVER LAYOUTS
+========================================================= */
+
+.server-table-wrap{
+    max-height:300px;
+    overflow-y:auto;
+    margin:8px 0;
+}
+
+.server-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+}
+
+.server-table th,
+.server-table td{
+    padding:6px 10px;
+    text-align:left;
+    border-bottom:1px solid #444;
+}
+
+.server-table th{
+    background:#333;
+    position:sticky;
+    top:0;
+}
+
+.server-table td button{
+    margin:0 2px;
+    font-size:12px;
+    padding:3px 8px;
+}
+
+#saveToServerDialog label{
+    display:block;
+    margin:8px 0 4px;
+}
+
+#saveToServerDialog input{
+    width:100%;
+    padding:6px;
+    margin-bottom:8px;
+}

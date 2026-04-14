@@ -1,0 +1,12 @@
+# Embedded frontend (generated during build)
+backend/cmd/server/frontend/
+
+# SQLite database
+data/
+*.db
+
+# Local build output
+kingshot-server
+
+# Local deployment env file
+deploy/.env.prod

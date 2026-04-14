@@ -215,6 +215,12 @@
             </div>
 
             <div class="toolbar-group">
+                <button onclick="openServerLayouts()">Browse Server</button>
+                <button onclick="openSaveToServer()">Save to Server</button>
+                <button onclick="shareLayout()">Share</button>
+            </div>
+
+            <div class="toolbar-group">
                 <button class="zoom-btn" onclick="setZoom(0.75,this)">75%</button>
                 <button class="zoom-btn active" onclick="setZoom(1,this)">100%</button>
                 <button class="zoom-btn" onclick="setZoom(1.5,this)">150%</button>
@@ -258,7 +264,50 @@
     <div class="context-menu-item" onclick="objectContextDelete()">Delete</div>
 </div>
 
+<dialog id="serverLayoutsDialog">
+
+    <h3>Server Layouts</h3>
+
+    <div class="server-table-wrap">
+        <table class="server-table">
+            <thead>
+                <tr><th>Name</th><th></th><th>Updated</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="serverLayoutsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="dialog-buttons">
+        <button onclick="document.getElementById('serverLayoutsDialog').close()">Close</button>
+    </div>
+
+</dialog>
+
+<dialog id="saveToServerDialog">
+
+    <h3>Save to Server</h3>
+
+    <label>
+        Layout name
+        <input type="text" id="serverSaveName" required placeholder="My Layout">
+    </label>
+
+    <label>
+        Password (optional)
+        <input type="password" id="serverSavePassword" placeholder="Leave empty for none">
+    </label>
+
+    <div class="dialog-buttons">
+        <button onclick="saveToServer()">Save</button>
+        <button onclick="document.getElementById('saveToServerDialog').close()">Cancel</button>
+    </div>
+
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+window.__API_BASE__ = "__API_BASE__" === "__API_BASE__" ? "" : "__API_BASE__"
+</script>
 <script src="assets/js/planner.js"></script>
 
 </body>

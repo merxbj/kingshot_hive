@@ -1,0 +1,45 @@
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/OWNER_OR_ORG/kingshot-hive:latest}
+    container_name: kingshot-app
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    expose:
+      - "8080"
+    volumes:
+      - ${DB_DIR:-./data}:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - app_net
+
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: kingshot-proxy
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
