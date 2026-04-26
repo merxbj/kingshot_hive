@@ -120,6 +120,7 @@ jobs:
           script: |
             set -e
             cd "${{ secrets.DEPLOY_PATH }}"
+            export DB_DIR="${{ secrets.DEPLOY_PATH }}/data"
             export APP_IMAGE="${{ github.event.inputs.rollback_image != '' && github.event.inputs.rollback_image || needs.docker.outputs.image_ref }}"
             docker compose -f deploy/compose.prod.yml pull
             docker compose -f deploy/compose.prod.yml up -d
