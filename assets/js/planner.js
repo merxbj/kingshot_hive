@@ -1583,7 +1583,7 @@ async function shareLayout(){
 
         const password = prompt("Set a password to protect edits (leave empty for none):", "")
 
-        const r = await fetch(API_BASE + "/api/layouts", {
+        const r = await fetch(API_BASE + "/api/layouts/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: name, data: json, password: password || "" })
@@ -1678,7 +1678,7 @@ async function exportScreenshot(){
 
 async function listServerLayouts(){
     try {
-        const r = await fetch(API_BASE + "/api/layouts")
+        const r = await fetch(API_BASE + "/api/layouts/")
         if(!r.ok) return []
         return await r.json()
     } catch(e) {
@@ -1720,7 +1720,7 @@ async function saveToServer(){
     const password = document.getElementById("serverSavePassword").value
 
     try {
-        const r = await fetch(API_BASE + "/api/layouts", {
+        const r = await fetch(API_BASE + "/api/layouts/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: name, data: json, password: password || "" })
