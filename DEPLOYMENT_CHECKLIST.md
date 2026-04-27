@@ -32,6 +32,18 @@ All code implementation is now complete and pushed to your fork. This checklist 
 - [x] 5.2 Frontend Deployment Verification
 - [ ] 5.3 Full End-to-End Test
 
+**Phase 5A - HTTPS via Cloudflare Quick Tunnel (No domain/account required)**
+- [ ] 5A.1 Install and run `cloudflared` on Pi
+- [ ] 5A.2 Start Quick Tunnel and capture `https://*.trycloudflare.com` URL
+- [ ] 5A.3 Update `PROD_API_BASE` to Quick Tunnel HTTPS URL
+- [ ] 5A.4 Re-run frontend deploy and verify end-to-end save/load
+
+**Phase 5B - Permanent Tunnel (Optional future upgrade)**
+- [ ] 5B.1 Create Cloudflare account and add domain to Cloudflare DNS
+- [ ] 5B.2 Create named tunnel and DNS hostname
+- [ ] 5B.3 Run named tunnel as systemd service
+- [ ] 5B.4 Update `PROD_API_BASE` to permanent HTTPS hostname
+
 ---
 
 ## Phase 1: GitHub Setup
@@ -352,6 +364,75 @@ To complete end-to-end testing, backend API must be available over HTTPS:
 3. Set `PROD_API_BASE` to `https://<your-domain>`
 4. Re-run `deploy-frontend.yml` and test Save/Browse again
 
+### 5A: Cloudflare Quick Tunnel (No domain/account)
+
+Use this section when running the project as hobby/personal and you want HTTPS now, without domain purchase and without creating a Cloudflare account.
+
+#### 5A.1 Prerequisites
+
+1. Backend reachable locally on Pi, for example:
+   - `http://127.0.0.1:80/api/layouts/`
+
+#### 5A.2 Install cloudflared on Pi
+
+```bash
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt update
+sudo apt install -y cloudflared
+cloudflared --version
+```
+
+#### 5A.3 Start Quick Tunnel
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:80
+```
+
+The command prints a public HTTPS URL like `https://random-name.trycloudflare.com`.
+Keep this process running while using the tunnel.
+
+#### 5A.4 Update frontend API base and redeploy
+
+1. In GitHub, go to **Settings -> Secrets and variables -> Actions -> Variables**
+2. Set `PROD_API_BASE` to your Quick Tunnel URL, for example:
+   - `https://random-name.trycloudflare.com`
+3. Re-run workflow: **Deploy Frontend to GitHub Pages**
+4. Hard refresh `https://merxbj.github.io/kingshot_hive/`
+5. Verify in page source that `window.__API_BASE__` now uses `https://...trycloudflare.com`
+
+#### 5A.5 Verify endpoint and app behavior
+
+```bash
+curl -I https://<YOUR_TRYCLOUDFLARE_URL>/api/layouts/
+curl https://<YOUR_TRYCLOUDFLARE_URL>/api/layouts/
+```
+
+Expected: HTTP 200 and JSON body (for example `[]`).
+
+#### 5A.6 Final verification
+
+1. Click **Save to Server** and confirm no mixed-content error appears
+2. Click **Browse Server** and confirm layouts load
+3. Share/load flow works end-to-end
+
+#### 5A.7 Important limitation
+
+Quick Tunnel URL is temporary and may change when restarted. If URL changes:
+1. Update `PROD_API_BASE` with new URL
+2. Re-run frontend deploy workflow
+
+### 5B: Permanent Tunnel (Optional future upgrade)
+
+Use this only when you later have a Cloudflare account and a domain.
+
+1. `cloudflared tunnel login`
+2. `cloudflared tunnel create kingshot-hive`
+3. Configure ingress hostname (for example `api.<your-domain>`) to `http://127.0.0.1:80`
+4. `cloudflared tunnel route dns kingshot-hive api.<your-domain>`
+5. Install and enable systemd service
+6. Set `PROD_API_BASE=https://api.<your-domain>` and redeploy frontend
+
 ---
 
 ## Phase 6: Troubleshooting Quick Reference
@@ -362,6 +443,8 @@ To complete end-to-end testing, backend API must be available over HTTPS:
 | Pages shows raw placeholders (for example `__PROD_API_BASE__`) | Pages source set to legacy branch deployment | In Settings → Pages set Source to GitHub Actions; verify `build_type` is `workflow` via `gh api repos/<owner>/<repo>/pages` |
 | Backend API unreachable from Pages | CORS or network issue | Check `CORS_ORIGIN` in `deploy/.env.prod`; verify firewall/NAT |
 | Mixed Content error in browser console | Frontend is HTTPS but `PROD_API_BASE` is HTTP | Serve API over HTTPS (domain + TLS), update `PROD_API_BASE`, redeploy frontend |
+| Quick Tunnel URL stopped working | Quick Tunnel session restarted or ended | Restart `cloudflared tunnel --url http://127.0.0.1:80`, update `PROD_API_BASE`, redeploy frontend |
+| Tunnel returns 502/1033 | `cloudflared` cannot reach local service or tunnel unhealthy | Confirm local backend responds on target port; for named tunnel also check `systemctl status cloudflared` and `~/.cloudflared/config.yml` |
 | Deploy workflow fails | SSH key or host unreachable | Test `ssh -i key kingshot@host` from GH runner context; add to known_hosts |
 | Pi service won't start | Image pull failed | Check GHCR auth; verify image tag in deploy output; check Docker logs |
 | Rate limiting error | Too many write requests | Expected if testing; will reset; check rate limiter in handlers.go |

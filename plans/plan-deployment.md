@@ -78,3 +78,49 @@ Deploy backend on Raspberry Pi using Docker with automated GitHub Actions CD, ex
 1. TLS path recommendation: Option A keep hardcoded IP temporarily with strict firewall and short timeline, Option B move immediately to free DDNS hostname for trusted HTTPS.
 2. Rollback strategy recommendation: Option A keep previous container image on Pi and one-click compose rollback, Option B add immutable release tags and deploy by tag.
 3. Backup target recommendation: Option A second local disk on Pi, Option B encrypted off-device copy to another host.
+
+---
+
+## Dedicated Path: Cloudflare Tunnel for Hobby/Personal HTTPS
+
+Use this path when frontend is served from GitHub Pages (HTTPS) and backend currently uses HTTP on a home network/public IP.
+
+### Why this path
+1. Resolves browser mixed-content blocks by exposing backend via HTTPS.
+2. No inbound port forwarding required for API access through the tunnel.
+3. Fastest operational path for hobby usage.
+
+### Current assumption
+1. No domain and no Cloudflare account yet.
+1. Goal is immediate HTTPS to unblock GitHub Pages mixed-content restrictions.
+
+### Setup flow now (Quick Tunnel)
+1. Install `cloudflared` on Raspberry Pi.
+1. Start quick tunnel: `cloudflared tunnel --url http://127.0.0.1:80`.
+1. Copy generated `https://*.trycloudflare.com` URL.
+1. Set repository variable `PROD_API_BASE` to that HTTPS URL.
+1. Re-run frontend Pages workflow and verify save/load operations.
+
+### Future permanent flow (when domain/account are available)
+1. Create Cloudflare account and add domain to Cloudflare DNS.
+1. Authenticate with `cloudflared tunnel login`.
+1. Create named tunnel: `cloudflared tunnel create kingshot-hive`.
+1. Configure ingress hostname to local backend service.
+1. Route DNS for `api.<your-domain>`.
+1. Install named tunnel as system service.
+1. Set `PROD_API_BASE=https://api.<your-domain>` and redeploy frontend.
+
+### Long-term pros
+1. HTTPS without self-managing TLS certificates on Pi.
+1. Reduced attack surface because no direct inbound API port exposure is required.
+1. Works well with dynamic residential IP changes.
+
+### Long-term cons
+1. Dependency on Cloudflare service availability and policies.
+1. Additional operational component (`cloudflared`) to monitor.
+1. Extra hop may add small latency compared to direct edge TLS on your own host.
+
+### Exit strategy (if needed later)
+1. Migrate to direct reverse proxy TLS on your own infrastructure (Caddy/Nginx + Let's Encrypt).
+1. Keep public API hostname unchanged where possible to avoid frontend/config churn.
+1. Update DNS and `PROD_API_BASE` only if endpoint host changes.
