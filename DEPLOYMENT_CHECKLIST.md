@@ -17,32 +17,20 @@ All code implementation is now complete and pushed to your fork. This checklist 
 - [x] 2.4 Test Local Deployment
 - [x] 2.5 Set Up Auto-Start on Boot
 
-**Phase 3 — MikroTik Router Configuration**
-- [x] 3.1 Add Destination NAT (Port Forwarding)
-- [x] 3.2 Add Firewall Filter Rule (Allow Forwarded Traffic)
-- [x] 3.3 Verify Port Forwarding
-- [ ] 3.4 *(Optional)* Add Connection Limits for Abuse Prevention
+**Phase 3 — GitHub Actions**
+- [x] 3.1 Ensure Workflows Are Enabled
+- [x] 3.2 Test Workflows
 
-**Phase 4 — GitHub Actions**
-- [x] 4.1 Ensure Workflows Are Enabled
-- [x] 4.2 Test Workflows
+**Phase 4 — Verification and HTTPS Setup**
+- [x] 4.1 Backend Deployment Verification
+- [x] 4.2 Frontend Deployment Verification
+- [x] 4.3 Full End-to-End Test
 
-**Phase 5 — Verification**
-- [x] 5.1 Backend Deployment Verification
-- [x] 5.2 Frontend Deployment Verification
-- [ ] 5.3 Full End-to-End Test
-
-**Phase 5A - HTTPS via Cloudflare Quick Tunnel (No domain/account required)**
-- [ ] 5A.1 Install and run `cloudflared` on Pi
-- [ ] 5A.2 Start Quick Tunnel and capture `https://*.trycloudflare.com` URL
-- [ ] 5A.3 Update `PROD_API_BASE` to Quick Tunnel HTTPS URL
-- [ ] 5A.4 Re-run frontend deploy and verify end-to-end save/load
-
-**Phase 5B - Permanent Tunnel (Optional future upgrade)**
-- [ ] 5B.1 Create Cloudflare account and add domain to Cloudflare DNS
-- [ ] 5B.2 Create named tunnel and DNS hostname
-- [ ] 5B.3 Run named tunnel as systemd service
-- [ ] 5B.4 Update `PROD_API_BASE` to permanent HTTPS hostname
+**Phase 4A - HTTPS via Cloudflare Quick Tunnel**
+- [x] 4A.1 Install `cloudflared` on Pi
+- [x] 4A.2 Set up Quick Tunnel as systemd service
+- [x] 4A.3 Extract Quick Tunnel URL and update `PROD_API_BASE`
+- [x] 4A.4 Verify end-to-end save/load functionality
 
 ---
 
@@ -96,7 +84,9 @@ cat ~/.ssh/kingshot-deploy.pub   # Copy this to Pi ~/.ssh/authorized_keys
 
 | Variable Name | Value | Notes |
 |---|---|---|
-| `PROD_API_BASE` | `http://<your-public-ip>` | Your public IP or DDNS hostname (e.g., `http://203.0.113.50`); **not HTTPS for bare IP** |
+| `PROD_API_BASE` | `https://placeholder.trycloudflare.com` | **Temporary placeholder.** Will be updated in Phase 4A after Quick Tunnel is set up. The value must be an HTTPS URL to avoid mixed-content blocking from the Pages frontend. |
+
+**Note:** The actual Quick Tunnel URL will be obtained in Phase 4A (after installing and configuring cloudflared on the Pi). You can update this variable then using the helper script: `./scripts/sync_quick_tunnel_api_base.sh --pi-host <PI_IP>`
 
 ---
 
@@ -215,87 +205,15 @@ sudo systemctl status kingshot
 
 ---
 
-## Phase 3: MikroTik Router Configuration
+## Phase 3: Enable GitHub Actions Workflows
 
-### 3.1 Add Destination NAT (Port Forwarding)
-
-**Assumption:** Pi LAN IP is `192.168.1.100`, your public IP is `203.0.113.50`, port 80.
-
-**On MikroTik:**
-
-1. Go to **IP → Firewall → NAT**
-2. Click **+ Add new**
-3. Set the following:
-
-| Field | Value |
-|---|---|
-| Chain | `dstnat` |
-| Protocol | `tcp` |
-| Dst. Port | `80` |
-| In. Interface | `ether1` (or your WAN interface) |
-| — **Action** → | — |
-| Action | `dst-nat` |
-| To Addresses | `192.168.1.100` |
-| To Ports | `80` |
-
-4. Click **OK**
-
-### 3.2 Add Firewall Filter Rule (Allow Forwarded Traffic)
-
-1. Go to **IP → Firewall → Filter Rules**
-2. Click **+ Add new**
-3. Set the following:
-
-| Field | Value |
-|---|---|
-| Chain | `forward` |
-| In. Interface | `ether1` (WAN) |
-| Out. Interface | `bridge` (or LAN bridge) |
-| Protocol | `tcp` |
-| Dst. Port | `80` |
-| — **Action** → | — |
-| Action | `accept` |
-
-4. Click **OK**
-
-### 3.3 Verify Port Forwarding
-
-**From any external network (not your LAN), test:**
-
-```bash
-curl http://203.0.113.50/api/layouts
-```
-
-Should return `[]` or an error; if connection refused, check firewall rules and NAT.
-
-### 3.4 (Optional) Add Connection Limits and Address Lists for Abuse Prevention
-
-**On MikroTik, add connection limit rule:**
-
-1. Go to **IP → Firewall → Filter Rules**
-2. Add a rule **before** the `80` accept rule:
-
-| Field | Value |
-|---|---|
-| Chain | `forward` |
-| Protocol | `tcp` |
-| Dst. Port | `80` |
-| Connection Limit | `100,32` (100 concurrent connections per /32) |
-| — **Action** → | |
-| Action | `drop` |
-| Comment | `Limit connections to port 80` |
-
----
-
-## Phase 4: Enable GitHub Actions Workflows
-
-### 4.1 Ensure Workflows Are Enabled
+### 3.1 Ensure Workflows Are Enabled
 
 1. Go to your fork **Settings → Actions → General**
 2. Under "Actions permissions", select: **Allow all actions and reusable workflows**
 3. Click **Save**
 
-### 4.2 Test Workflows
+### 3.2 Test Workflows
 
 **Option A: Push to `main` to trigger auto-deploy**
 
@@ -318,9 +236,9 @@ This will trigger:
 
 ---
 
-## Phase 5: Verification
+## Phase 4: Verification
 
-### 5.1 Backend Deployment Verification
+### 4.1 Backend Deployment Verification
 
 **Check GitHub Actions:**
 1. Go to **Actions → Backend CI and Deploy**
@@ -334,7 +252,7 @@ ssh kingshot@<pi-ip> docker compose -f /opt/kingshot/deploy/compose.prod.yml ps
 
 Should show both `kingshot-app` and `kingshot-proxy` with status `Up`.
 
-### 5.2 Frontend Deployment Verification
+### 4.2 Frontend Deployment Verification
 
 1. Go to **Actions → Deploy Frontend to GitHub Pages**
 2. Wait for workflow to complete
@@ -345,7 +263,7 @@ Should show both `kingshot-app` and `kingshot-proxy` with status `Up`.
    - `window.__DEBUG_VERSION__` shows the expected version marker
 6. Click **Browse Server** → should connect to backend at your public IP
 
-### 5.3 Full End-to-End Test
+### 4.3 Full End-to-End Test
 
 1. Open: `https://merxbj.github.io/kingshot_hive/`
 2. Create a layout locally
@@ -353,27 +271,15 @@ Should show both `kingshot-app` and `kingshot-proxy` with status `Up`.
 4. Click **Browse Server** and load the saved layout
 5. Share the layout and test the share link
 
-**Current status:** blocked if `PROD_API_BASE` is plain HTTP (for example `http://84.19.72.85`) while Pages runs on HTTPS.
+**Note:** Full end-to-end testing requires HTTPS on the API endpoint (to avoid mixed-content blocking). This is provided by the Cloudflare Quick Tunnel service configured in Phase 4A.
 
-Browsers enforce mixed-content rules and will block API requests from:
-- `https://merxbj.github.io/kingshot_hive/` → `http://...`
+### 4A: Cloudflare Quick Tunnel (No domain/account required)
 
-To complete end-to-end testing, backend API must be available over HTTPS:
-1. Add a domain (or subdomain) pointing to your public IP
-2. Terminate TLS on the Pi (for example Caddy or Nginx with Let's Encrypt)
-3. Set `PROD_API_BASE` to `https://<your-domain>`
-4. Re-run `deploy-frontend.yml` and test Save/Browse again
+Cloudflare Quick Tunnel provides a stable HTTPS endpoint for the backend API without requiring a domain or Cloudflare account. The tunnel runs as a systemd service on the Pi, automatically restarting on reboot.
 
-### 5A: Cloudflare Quick Tunnel (No domain/account)
+#### 4A.1 Install cloudflared on Pi
 
-Use this section when running the project as hobby/personal and you want HTTPS now, without domain purchase and without creating a Cloudflare account.
-
-#### 5A.1 Prerequisites
-
-1. Backend reachable locally on Pi, for example:
-   - `http://127.0.0.1:80/api/layouts/`
-
-#### 5A.2 Install cloudflared on Pi
+**On Pi, as root or with sudo:**
 
 ```bash
 curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
@@ -383,68 +289,139 @@ sudo apt install -y cloudflared
 cloudflared --version
 ```
 
-#### 5A.3 Start Quick Tunnel
+#### 4A.2 Set Up Quick Tunnel as systemd service
+
+**On Pi, as root or with sudo:**
 
 ```bash
-cloudflared tunnel --url http://127.0.0.1:80
+sudo tee /etc/systemd/system/kingshot-quicktunnel.service > /dev/null <<EOF
+[Unit]
+Description=Kingshot Quick Cloudflare Tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=kingshot
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:80
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable kingshot-quicktunnel
+sudo systemctl restart kingshot-quicktunnel
+sudo systemctl status kingshot-quicktunnel
 ```
 
-The command prints a public HTTPS URL like `https://random-name.trycloudflare.com`.
-Keep this process running while using the tunnel.
-
-#### 5A.4 Update frontend API base and redeploy
-
-1. In GitHub, go to **Settings -> Secrets and variables -> Actions -> Variables**
-2. Set `PROD_API_BASE` to your Quick Tunnel URL, for example:
-   - `https://random-name.trycloudflare.com`
-3. Re-run workflow: **Deploy Frontend to GitHub Pages**
-4. Hard refresh `https://merxbj.github.io/kingshot_hive/`
-5. Verify in page source that `window.__API_BASE__` now uses `https://...trycloudflare.com`
-
-#### 5A.5 Verify endpoint and app behavior
+The tunnel will generate a new `https://*.trycloudflare.com` URL each time it starts. Check the logs:
 
 ```bash
-curl -I https://<YOUR_TRYCLOUDFLARE_URL>/api/layouts/
-curl https://<YOUR_TRYCLOUDFLARE_URL>/api/layouts/
+sudo journalctl -u kingshot-quicktunnel -n 20 -f
+```
+
+Look for a line like: `https://my-tunnel-name.trycloudflare.com`
+
+#### 4A.3 Extract Quick Tunnel URL and update PROD_API_BASE
+
+Use the provided helper script to automate URL extraction and frontend redeployment. Run it **on the Pi**:
+
+```bash
+cd /opt/kingshot
+./scripts/sync_quick_tunnel_api_base.sh
+```
+
+The script will:
+1. Read the Quick Tunnel URL from local systemd logs
+2. Update the `PROD_API_BASE` GitHub variable with the URL
+3. Trigger the `deploy-frontend.yml` workflow to redeploy the frontend
+
+**Manual alternative:**
+
+1. SSH to Pi and get the URL:
+   ```bash
+   sudo journalctl -u kingshot-quicktunnel -n 100 | grep trycloudflare
+   ```
+
+2. In GitHub, go to **Settings → Secrets and variables → Actions → Variables**
+
+3. Update `PROD_API_BASE` to your Quick Tunnel URL (for example `https://my-tunnel-name.trycloudflare.com`)
+
+4. In GitHub **Actions**, manually trigger **Deploy Frontend to GitHub Pages**
+
+#### 4A.4 Verify End-to-End Functionality
+
+1. Hard-refresh `https://merxbj.github.io/kingshot_hive/` in your browser
+2. Verify in page source that `window.__API_BASE__` shows your Quick Tunnel URL (inspect → Console)
+3. Confirm no mixed-content errors in the browser console
+4. Test **Save to Server** with a layout
+5. Test **Browse Server** to load the saved layout
+6. Verify the share/load flow works end-to-end
+
+**Testing the tunnel endpoint directly:**
+
+```bash
+TUNNEL_URL=$(sudo journalctl -u kingshot-quicktunnel -n 100 | grep trycloudflare | tail -1 | grep -oP 'https://[^\s]+' | head -1)
+curl -I "$TUNNEL_URL/api/layouts/"
+curl "$TUNNEL_URL/api/layouts/"
 ```
 
 Expected: HTTP 200 and JSON body (for example `[]`).
 
-#### 5A.6 Final verification
+---
 
-1. Click **Save to Server** and confirm no mixed-content error appears
-2. Click **Browse Server** and confirm layouts load
-3. Share/load flow works end-to-end
+## Operational Reminders
 
-#### 5A.7 Important limitation
+### Updating compose.prod.yml or other deployment configs
 
-Quick Tunnel URL is temporary and may change when restarted. If URL changes:
-1. Update `PROD_API_BASE` with new URL
-2. Re-run frontend deploy workflow
+The CI/CD deployment workflow pulls the Docker image from GHCR and runs `docker compose up -d`, but does **not** pull git changes on the Pi.
 
-### 5B: Permanent Tunnel (Optional future upgrade)
+If you update any of the following files, you must manually pull them on the Pi:
+- `deploy/compose.prod.yml`
+- `deploy/.env.prod`
+- Any other config file referenced in the compose stack
 
-Use this only when you later have a Cloudflare account and a domain.
+**On Pi, to apply config changes:**
 
-1. `cloudflared tunnel login`
-2. `cloudflared tunnel create kingshot-hive`
-3. Configure ingress hostname (for example `api.<your-domain>`) to `http://127.0.0.1:80`
-4. `cloudflared tunnel route dns kingshot-hive api.<your-domain>`
-5. Install and enable systemd service
-6. Set `PROD_API_BASE=https://api.<your-domain>` and redeploy frontend
+```bash
+ssh kingshot@<pi-ip>
+cd /opt/kingshot
+git pull
+docker compose -f deploy/compose.prod.yml up -d
+```
+
+This is by design: Docker images are the source of truth for application code and dependencies; configuration and deployment manifests are managed separately.
+
+### Quick Tunnel URL changes
+
+The Quick Tunnel URL changes each time the `kingshot-quicktunnel` service restarts (for example, after a reboot). When this happens:
+
+1. Use the sync helper script (simplest), run on the Pi:
+   ```bash
+   cd /opt/kingshot
+   ./scripts/sync_quick_tunnel_api_base.sh
+   ```
+
+2. Or manually:
+   - Extract new URL from Pi: `sudo journalctl -u kingshot-quicktunnel | grep trycloudflare`
+   - Update GitHub `PROD_API_BASE` variable
+   - Trigger frontend deploy manually or via the script with `--skip-workflow` to just update the variable
 
 ---
 
-## Phase 6: Troubleshooting Quick Reference
+## Phase 5: Troubleshooting Quick Reference
 
 | Issue | Diagnosis | Fix |
 |---|---|---|
 | Pages site 404 | Workflow didn't run | Check Actions logs; ensure `main` exists; manually trigger deploy-frontend |
 | Pages shows raw placeholders (for example `__PROD_API_BASE__`) | Pages source set to legacy branch deployment | In Settings → Pages set Source to GitHub Actions; verify `build_type` is `workflow` via `gh api repos/<owner>/<repo>/pages` |
 | Backend API unreachable from Pages | CORS or network issue | Check `CORS_ORIGIN` in `deploy/.env.prod`; verify firewall/NAT |
-| Mixed Content error in browser console | Frontend is HTTPS but `PROD_API_BASE` is HTTP | Serve API over HTTPS (domain + TLS), update `PROD_API_BASE`, redeploy frontend |
-| Quick Tunnel URL stopped working | Quick Tunnel session restarted or ended | Restart `cloudflared tunnel --url http://127.0.0.1:80`, update `PROD_API_BASE`, redeploy frontend |
-| Tunnel returns 502/1033 | `cloudflared` cannot reach local service or tunnel unhealthy | Confirm local backend responds on target port; for named tunnel also check `systemctl status cloudflared` and `~/.cloudflared/config.yml` |
+| Mixed Content error in browser console | Frontend is HTTPS but `PROD_API_BASE` is HTTP | Verify Quick Tunnel service is running on Pi: `sudo systemctl status kingshot-quicktunnel`; check `PROD_API_BASE` is set to `https://...trycloudflare.com` |
+| Quick Tunnel service won't start | cloudflared not installed or permissions issue | Verify cloudflared is installed: `which cloudflared`; check service logs: `sudo journalctl -u kingshot-quicktunnel` |
+| Cannot extract Quick Tunnel URL from logs | Service just started or logs rotated | Wait 10 seconds for tunnel to establish; check: `sudo journalctl -u kingshot-quicktunnel -n 50 \| grep trycloudflare` |
+| Sync script fails to connect to Pi | SSH or authentication issue | Test manually: `ssh -i ~/.ssh/kingshot-deploy kingshot@<pi-ip> echo ok`; verify secret `DEPLOY_SSH_KEY` is correct |
 | Deploy workflow fails | SSH key or host unreachable | Test `ssh -i key kingshot@host` from GH runner context; add to known_hosts |
 | Pi service won't start | Image pull failed | Check GHCR auth; verify image tag in deploy output; check Docker logs |
 | Rate limiting error | Too many write requests | Expected if testing; will reset; check rate limiter in handlers.go |
@@ -453,10 +430,13 @@ Use this only when you later have a Cloudflare account and a domain.
 
 ## Next Steps
 
-1. **Complete GitHub Setup** (Phase 1)
-2. **Prepare Raspberry Pi** (Phase 2)
-3. **Configure MikroTik** (Phase 3)
-4. **Enable and Test Workflows** (Phase 4 & 5)
-5. **(Optional) Set up monitoring, backups, and DDNS** (see deployment plan for long-term hardening)
+1. **Complete GitHub Setup** (Phase 1) ✅
+2. **Prepare Raspberry Pi** (Phase 2) ✅
+3. **Enable and Test Workflows** (Phase 3) ✅
+4. **Set Up Cloudflare Quick Tunnel** (Phase 4A)
+   - Install cloudflared
+   - Create and enable systemd service
+   - Extract URL and update `PROD_API_BASE`
+   - Verify end-to-end functionality
 
-For questions, refer to [plan-deployment.md](plans/plan-deployment.md) for full context.
+For architectural questions or long-term planning, refer to [plan-deployment.md](plans/plan-deployment.md).
