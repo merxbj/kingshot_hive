@@ -127,12 +127,17 @@ body{
 }
 
 .castle-name{
-    font-size:11px;
-    line-height:8px;
-    font-weight:600;
+    max-width:100%;
+    padding:0 4px;
+    font-size:10px;
+    line-height:1.1;
+    font-weight:500;
     font-family:"Segoe UI", Arial, sans-serif;
     color:inherit;
     margin-bottom:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .castle-power{
@@ -439,8 +444,13 @@ body{
 }
 
 .player-name{
-    font-weight:600;
-    font-size: 12px;
+    flex:1;
+    min-width:0;
+    font-weight:500;
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .player-rank{
