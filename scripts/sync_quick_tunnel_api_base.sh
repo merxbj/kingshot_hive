@@ -126,7 +126,12 @@ TUNNEL_URL="$(journalctl -u "$SERVICE_NAME" -n 300 --no-pager \
 
 if [[ -z "$TUNNEL_URL" ]]; then
   echo "Error: could not find a Quick Tunnel URL in service logs." >&2
-  echo "Check that the service is running: sudo systemctl status $SERVICE_NAME" >&2
+  echo "" >&2
+  echo "Possible causes:" >&2
+  echo "  1) Service not running: sudo systemctl status $SERVICE_NAME" >&2
+  echo "  2) No read access to journal. Fix with:" >&2
+  echo "       sudo usermod -aG systemd-journal \$(whoami)" >&2
+  echo "     Then re-login or run: newgrp systemd-journal" >&2
   exit 1
 fi
 

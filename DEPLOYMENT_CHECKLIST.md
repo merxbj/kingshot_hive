@@ -29,8 +29,9 @@ All code implementation is now complete and pushed to your fork. This checklist 
 **Phase 4A - HTTPS via Cloudflare Quick Tunnel**
 - [x] 4A.1 Install `cloudflared` on Pi
 - [x] 4A.2 Set up Quick Tunnel as systemd service
-- [x] 4A.3 Extract Quick Tunnel URL and update `PROD_API_BASE`
-- [x] 4A.4 Verify end-to-end save/load functionality
+- [x] 4A.3 Grant journal read access to the kingshot user
+- [x] 4A.4 Extract Quick Tunnel URL and update `PROD_API_BASE`
+- [x] 4A.5 Verify end-to-end save/load functionality
 
 ---
 
@@ -324,7 +325,16 @@ sudo journalctl -u kingshot-quicktunnel -n 20 -f
 
 Look for a line like: `https://my-tunnel-name.trycloudflare.com`
 
-#### 4A.3 Extract Quick Tunnel URL and update PROD_API_BASE
+#### 4A.3 Grant journal read access to the kingshot user (one-time)
+
+The sync script reads systemd logs directly. Add the user to the `systemd-journal` group so it can do this without `sudo`:
+
+```bash
+sudo usermod -aG systemd-journal kingshot
+# Then re-login (or run: newgrp systemd-journal) for the group to take effect
+```
+
+#### 4A.4 Extract Quick Tunnel URL and update PROD_API_BASE
 
 Use the provided helper script to automate URL extraction and frontend redeployment. Run it **on the Pi**:
 
@@ -351,7 +361,7 @@ The script will:
 
 4. In GitHub **Actions**, manually trigger **Deploy Frontend to GitHub Pages**
 
-#### 4A.4 Verify End-to-End Functionality
+#### 4A.5 Verify End-to-End Functionality
 
 1. Hard-refresh `https://merxbj.github.io/kingshot_hive/` in your browser
 2. Verify in page source that `window.__API_BASE__` shows your Quick Tunnel URL (inspect → Console)
