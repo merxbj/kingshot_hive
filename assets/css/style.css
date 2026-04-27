@@ -90,6 +90,7 @@ body{
     grid-row:2;
     margin:0;
     position:relative;
+    cursor:grab;
 
     background:
             linear-gradient(#333 1px, transparent 1px),

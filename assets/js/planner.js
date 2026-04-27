@@ -39,6 +39,7 @@ let startTile = centerTile - Math.floor(trapSize / 2)
 
 /* DOM REFERENCES */
 let map = document.getElementById("map")
+const mapWrapper = document.querySelector(".map-wrapper")
 
 const castleDialog = document.getElementById("castleDialog")
 const castleForm = document.getElementById("castleForm")
@@ -60,6 +61,14 @@ let offsetX = 0
 let offsetY = 0
 let hasDragged = false
 let dragCtrl = false
+
+/* MAP PAN STATE */
+let isPanningMap = false
+let mapPanStartX = 0
+let mapPanStartY = 0
+let mapPanScrollLeft = 0
+let mapPanScrollTop = 0
+let suppressNextMapClick = false
 
 /* SELECTION STATE */
 let activeObject = new Set()
@@ -288,7 +297,6 @@ window.addEventListener("load", async function(){
 })
 
 window.addEventListener("load", function(){
-    const mapWrapper = document.querySelector(".map-wrapper")
     const rect = trap1.getBoundingClientRect()
     const wrapperRect = mapWrapper.getBoundingClientRect()
     const cx = rect.left + rect.width  / 2 - wrapperRect.left
@@ -298,7 +306,25 @@ window.addEventListener("load", function(){
 })
 
 map.addEventListener("click", (e)=>{
+    if(suppressNextMapClick){
+        suppressNextMapClick = false
+        return
+    }
     if(e.target === map) clearSelection()
+})
+
+map.addEventListener("mousedown", (e)=>{
+
+    if(e.button !== 0) return
+    if(e.target !== map) return
+
+    isPanningMap = true
+    mapPanStartX = e.clientX
+    mapPanStartY = e.clientY
+    mapPanScrollLeft = mapWrapper.scrollLeft
+    mapPanScrollTop = mapWrapper.scrollTop
+    map.style.cursor = "grabbing"
+
 })
 
 /* =========================================================
@@ -1130,6 +1156,15 @@ function makeDraggable(el){
 
 document.addEventListener("mousemove",(e)=>{
 
+    if(isPanningMap){
+        const dx = e.clientX - mapPanStartX
+        const dy = e.clientY - mapPanStartY
+        mapWrapper.scrollLeft = mapPanScrollLeft - dx
+        mapWrapper.scrollTop  = mapPanScrollTop  - dy
+        if(Math.abs(dx) > 2 || Math.abs(dy) > 2) suppressNextMapClick = true
+        return
+    }
+
     if(!selected) return
 
     hasDragged = true
@@ -1151,6 +1186,11 @@ document.addEventListener("mousemove",(e)=>{
 ========================================================= */
 
 document.addEventListener("mouseup",()=>{
+
+    if(isPanningMap){
+        isPanningMap = false
+        map.style.cursor = ""
+    }
 
     if(!selected) return
 
