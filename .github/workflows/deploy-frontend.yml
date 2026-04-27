@@ -32,9 +32,9 @@ jobs:
           cp assets/js/planner.js dist/assets/js/planner.js
           API_BASE="${PROD_API_BASE}"
           echo "DEBUG: API_BASE='${API_BASE}'"
-          sed -i "s|__API_BASE__|${API_BASE}|g" dist/index.html
+          sed -i "s|__PROD_API_BASE__|${API_BASE}|g" dist/index.html
           echo "DEBUG: result:"
-          grep -n "API_BASE" dist/index.html
+          grep -n "__API_BASE__\|84\." dist/index.html || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
