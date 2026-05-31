@@ -39,7 +39,9 @@ This planner helps organize player and building positioning on a fully configura
 - Visual **power tier color system**
 - Trap assignment indicator on castles
 - Highlight player ↔ castle selection; click a player to scroll the map to their castle
-- Save / load layout locally
+- Smart Save for local and linked server layouts
+- Publish layouts to the server with an optional password
+- Open existing server layouts from the Layout Manager
 - Export / import layout JSON
 - Export player list to CSV
 - Zoom levels (75–200%)
@@ -81,11 +83,9 @@ Castles and player list entries are automatically colored based on this tier.
 | Button | Result |
 |--------|--------|
 | **Add ▾** | Dropdown to add any object type |
+| **Save** | Saves locally and updates the linked server layout, or opens Publish for new layouts |
+| **Layout ▾** | Open from server, Save As, copy share link, import/export, clear layout |
 | **Map settings** | Configure width, height, and origin |
-| **Save / Load layout** | Persist to browser localStorage |
-| **Export / Import layout** | JSON file |
-| **Export player list** | CSV file |
-| **Export image** | PNG screenshot of the map |
 | **75% … 200%** | Zoom levels |
 
 ---
@@ -117,15 +117,22 @@ Castles and player list entries are automatically colored based on this tier.
 
 The planner supports multiple persistence options:
 
-- **Save layout** → browser localStorage
-- **Load layout** → browser localStorage
-- **Export layout** → JSON file
-- **Import layout** → JSON file
+- **Save** → always writes the current layout to browser localStorage
+- **First Save** on an unlinked layout opens a Publish dialog and creates a new server layout
+- **Save** on a linked layout updates that same server layout directly
+- **Layout Manager** → open existing server layouts, Save As a new server layout, unlink the current layout, or copy a share link
+- **Export / Import layout** → JSON file via the Layout menu
 - **Export player list** → CSV
 
 Layout JSON format:
 ```json
 {
+  "_meta": {
+    "serverLayoutId": null,
+    "serverLayoutName": null,
+    "hasServerPassword": false,
+    "lastServerSync": null
+  },
   "origin": { "x": 0, "y": 0 },
   "dimensions": { "w": 40, "h": 25 },
   "objects": [
@@ -161,9 +168,23 @@ kingshot_hive
 
 ## Running the Planner
 
-Simply open `index.html` in any modern browser.
+For development, run the embedded frontend through the Go server so the frontend and API are served the same way as the deployed app.
 
-No server or installation required.
+From the repository root:
+
+```bash
+make run
+```
+
+Then open `http://localhost:8080`.
+
+For a containerized local run, use:
+
+```bash
+docker compose up --build
+```
+
+Opening `index.html` directly is still useful for static-only checks, but it is no longer the primary development path because it bypasses the embedded-frontend and same-origin API setup.
 
 ---
 
@@ -172,7 +193,7 @@ No server or installation required.
 - Vanilla JavaScript
 - HTML5
 - CSS3
-- Browser localStorage
+- Browser localStorage + Go backend API
 - html2canvas (image export)
 
 No frameworks required.

@@ -160,6 +160,78 @@
 
 </dialog>
 
+<dialog id="publishDialog">
+
+    <h3 id="publishDialogTitle">Publish layout</h3>
+
+    <label>
+        Layout name
+        <input type="text" id="publishName" required placeholder="My Layout">
+    </label>
+
+    <label>
+        Password (optional)
+        <input type="password" id="publishPassword" placeholder="Leave empty for none">
+    </label>
+
+    <p id="publishDialogMessage" class="dialog-message hidden"></p>
+
+    <div class="dialog-buttons">
+        <button id="publishConfirmBtn">Publish</button>
+        <button type="button" id="publishCancelBtn">Cancel</button>
+    </div>
+
+</dialog>
+
+<dialog id="passwordRequestDialog">
+
+    <h3>Password required</h3>
+
+    <p id="passwordRequestText">Enter password</p>
+
+    <label>
+        Password
+        <input type="password" id="passwordRequestInput" placeholder="Password">
+    </label>
+
+    <p id="passwordRequestMessage" class="dialog-message hidden"></p>
+
+    <div class="dialog-buttons">
+        <button id="passwordConfirmBtn">Confirm</button>
+        <button type="button" id="passwordCancelBtn">Cancel</button>
+    </div>
+
+</dialog>
+
+<dialog id="layoutManagerDialog">
+
+    <h3>Layout Manager</h3>
+
+    <div class="layout-current-section">
+        <p id="lmCurrentStatus">Local only</p>
+
+        <div class="layout-manager-actions">
+            <button id="lmSaveAsBtn" type="button">Save As New</button>
+            <button id="lmCopyLinkBtn" type="button" class="hidden">Copy share link</button>
+            <button id="lmUnlinkBtn" type="button" class="hidden">Unlink</button>
+        </div>
+    </div>
+
+    <div class="server-table-wrap">
+        <table class="server-table">
+            <thead>
+                <tr><th>Name</th><th></th><th>Updated</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="serverLayoutsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="dialog-buttons">
+        <button type="button" id="layoutManagerCloseBtn">Close</button>
+    </div>
+
+</dialog>
+
 <h2>Kingshot Bear Trap Layout</h2>
 
 <div class="layout">
@@ -203,21 +275,27 @@
             </div>
 
             <div class="toolbar-group">
-                <button onclick="saveLayout()">Save layout</button>
-                <button onclick="loadLayout()">Load layout</button>
-                <button onclick="clearLayout()">Clear layout</button>
-                <button onclick="exportLayout()">Export layout</button>
-                <input type="file" id="importFile">
-                <button onclick="importLayout(document.getElementById('importFile').files[0])">
-                    Import layout
-                </button>
-                <button onclick="exportScreenshot()">Export image</button>
+                <button id="saveBtn" onclick="smartSave()">Save</button>
+                <span id="saveStatus" class="save-status">Local only</span>
             </div>
 
             <div class="toolbar-group">
-                <button onclick="openServerLayouts()">Browse Server</button>
-                <button onclick="openSaveToServer()">Save to Server</button>
-                <button onclick="shareLayout()">Share</button>
+                <div class="add-dropdown layout-dropdown">
+                    <button onclick="toggleLayoutMenu()">Layout &#9660;</button>
+                    <div id="layoutDropdownMenu" class="add-dropdown-menu">
+                        <div class="add-dropdown-item" onclick="openLayoutManager();closeToolbarMenus()">Open from server</div>
+                        <div class="add-dropdown-item" onclick="loadLayout();closeToolbarMenus()">Reload local layout</div>
+                        <div class="add-dropdown-item" onclick="openPublishDialog('saveas');closeToolbarMenus()">Save As new server layout</div>
+                        <div id="layoutMenuCopyLink" class="add-dropdown-item hidden" onclick="copyCurrentShareLink();closeToolbarMenus()">Copy share link</div>
+                        <div id="layoutMenuUnlink" class="add-dropdown-item hidden" onclick="unlinkLayout();closeToolbarMenus()">Unlink from server</div>
+                        <div class="layout-menu-divider"></div>
+                        <div class="add-dropdown-item" onclick="exportLayout();closeToolbarMenus()">Export JSON</div>
+                        <div class="add-dropdown-item" onclick="document.getElementById('layoutImportFile').click();closeToolbarMenus()">Import JSON</div>
+                        <div class="add-dropdown-item" onclick="exportScreenshot();closeToolbarMenus()">Export image</div>
+                        <div class="add-dropdown-item" onclick="clearLayout();closeToolbarMenus()">Clear layout</div>
+                    </div>
+                </div>
+                <input type="file" id="layoutImportFile" class="hidden" accept=".json,application/json">
             </div>
 
             <div class="toolbar-group">
@@ -263,46 +341,6 @@
     <div class="context-menu-item" onclick="objectContextEdit()">Edit</div>
     <div class="context-menu-item" onclick="objectContextDelete()">Delete</div>
 </div>
-
-<dialog id="serverLayoutsDialog">
-
-    <h3>Server Layouts</h3>
-
-    <div class="server-table-wrap">
-        <table class="server-table">
-            <thead>
-                <tr><th>Name</th><th></th><th>Updated</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="serverLayoutsBody"></tbody>
-        </table>
-    </div>
-
-    <div class="dialog-buttons">
-        <button onclick="document.getElementById('serverLayoutsDialog').close()">Close</button>
-    </div>
-
-</dialog>
-
-<dialog id="saveToServerDialog">
-
-    <h3>Save to Server</h3>
-
-    <label>
-        Layout name
-        <input type="text" id="serverSaveName" required placeholder="My Layout">
-    </label>
-
-    <label>
-        Password (optional)
-        <input type="password" id="serverSavePassword" placeholder="Leave empty for none">
-    </label>
-
-    <div class="dialog-buttons">
-        <button onclick="saveToServer()">Save</button>
-        <button onclick="document.getElementById('saveToServerDialog').close()">Cancel</button>
-    </div>
-
-</dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>

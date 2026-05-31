@@ -290,6 +290,12 @@ body{
     color:#aaa;
 }
 
+.save-status{
+    font-size:13px;
+    color:#aaa;
+    min-width:140px;
+}
+
 .toolbar-group input[type="file"]{
     height:36px;
 }
@@ -329,6 +335,17 @@ body{
 .add-dropdown-item:hover{
     background:#3a3a3a;
     color:#fff;
+}
+
+.add-dropdown-item.hidden,
+.hidden{
+    display:none;
+}
+
+.layout-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:#444;
 }
 
 .toolbar{
@@ -822,6 +839,21 @@ dialog input{
     justify-content:flex-end;
 }
 
+.dialog-message{
+    min-height:20px;
+    margin:8px 0 0;
+    font-size:13px;
+    color:#f5b041;
+}
+
+.dialog-message.error{
+    color:#ff8a80;
+}
+
+.dialog-message.success{
+    color:#81c784;
+}
+
 /* =========================================================
    CONTEXT MENU
 ========================================================= */
@@ -901,13 +933,25 @@ dialog input{
     padding:3px 8px;
 }
 
-#saveToServerDialog label{
-    display:block;
-    margin:8px 0 4px;
+#layoutManagerDialog{
+    width:720px;
+    max-width:90vw;
 }
 
-#saveToServerDialog input{
-    width:100%;
-    padding:6px;
-    margin-bottom:8px;
+.layout-current-section{
+    margin-bottom:14px;
+    padding:12px;
+    border:1px solid #444;
+    border-radius:8px;
+    background:#252525;
+}
+
+.layout-current-section p{
+    margin:0 0 10px;
+}
+
+.layout-manager-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }

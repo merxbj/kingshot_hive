@@ -25,6 +25,14 @@ const API_BASE = (window.__API_BASE__ || "").replace(/\/+$/, "")
 const grid = 40
 const castleSize = 2
 const trapSize = 3
+const LAYOUT_STORAGE_KEY = "kingshotLayout"
+
+const DEFAULT_LAYOUT_META = {
+    serverLayoutId: null,
+    serverLayoutName: null,
+    hasServerPassword: false,
+    lastServerSync: null
+}
 
 let mapTilesX = 40
 let mapTilesY = 25
@@ -50,10 +58,40 @@ const deleteDialog = document.getElementById("deleteDialog")
 const deleteConfirm = document.getElementById("deleteConfirm")
 const deleteCancel = document.getElementById("deleteCancel")
 
+const publishDialog = document.getElementById("publishDialog")
+const publishDialogTitle = document.getElementById("publishDialogTitle")
+const publishNameInput = document.getElementById("publishName")
+const publishPasswordInput = document.getElementById("publishPassword")
+const publishDialogMessage = document.getElementById("publishDialogMessage")
+const publishConfirmBtn = document.getElementById("publishConfirmBtn")
+const publishCancelBtn = document.getElementById("publishCancelBtn")
+
+const passwordRequestDialog = document.getElementById("passwordRequestDialog")
+const passwordRequestText = document.getElementById("passwordRequestText")
+const passwordRequestInput = document.getElementById("passwordRequestInput")
+const passwordRequestMessage = document.getElementById("passwordRequestMessage")
+const passwordConfirmBtn = document.getElementById("passwordConfirmBtn")
+const passwordCancelBtn = document.getElementById("passwordCancelBtn")
+
+const layoutManagerDialog = document.getElementById("layoutManagerDialog")
+const layoutManagerCloseBtn = document.getElementById("layoutManagerCloseBtn")
+const serverLayoutsBody = document.getElementById("serverLayoutsBody")
+const lmCurrentStatus = document.getElementById("lmCurrentStatus")
+const lmSaveAsBtn = document.getElementById("lmSaveAsBtn")
+const lmCopyLinkBtn = document.getElementById("lmCopyLinkBtn")
+const lmUnlinkBtn = document.getElementById("lmUnlinkBtn")
+
+const saveStatus = document.getElementById("saveStatus")
+const layoutImportFile = document.getElementById("layoutImportFile")
+const layoutMenuCopyLink = document.getElementById("layoutMenuCopyLink")
+const layoutMenuUnlink = document.getElementById("layoutMenuUnlink")
+
 /* DIALOG STATE */
 let editTarget = null
 let deleteTarget = null
 let posDialogTarget = null
+let publishMode = "new"
+let passwordRequestResolve = null
 
 /* DRAG STATE */
 let selected = null
@@ -86,6 +124,10 @@ let zoom = 1
 /* ORIGIN */
 let originX = 0
 let originY = 0
+
+/* LAYOUT STATE */
+let layoutMeta = { ...DEFAULT_LAYOUT_META }
+let cachedServerPassword = null
 
 /* =========================================================
    TERRITORY OVERLAY
@@ -285,8 +327,17 @@ window.addEventListener("load", async function(){
             const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(layoutId))
             if(r.ok){
                 const layout = await r.json()
-                localStorage.setItem("kingshotLayout", layout.data)
+                localStorage.setItem(LAYOUT_STORAGE_KEY, layout.data)
                 loadLayout()
+                saveLayout()
+                setLayoutMeta({
+                    serverLayoutId: layout.id,
+                    serverLayoutName: layout.name,
+                    hasServerPassword: layout.has_password,
+                    lastServerSync: layout.updated_at || new Date().toISOString()
+                })
+                cachedServerPassword = null
+                updateSaveStatus()
                 return
             }
         } catch(e) {
@@ -294,6 +345,7 @@ window.addEventListener("load", async function(){
         }
     }
     loadLayout()
+    updateSaveStatus()
 })
 
 window.addEventListener("load", function(){
@@ -877,14 +929,26 @@ function addMountain(){
 }
 
 function toggleAddMenu(){
-    document.getElementById("addDropdownMenu").classList.toggle("open")
+    const menu = document.getElementById("addDropdownMenu")
+    const shouldOpen = !menu.classList.contains("open")
+    closeToolbarMenus()
+    if(shouldOpen) menu.classList.add("open")
+}
+
+function toggleLayoutMenu(){
+    const menu = document.getElementById("layoutDropdownMenu")
+    const shouldOpen = !menu.classList.contains("open")
+    closeToolbarMenus()
+    if(shouldOpen) menu.classList.add("open")
+}
+
+function closeToolbarMenus(){
+    document.getElementById("addDropdownMenu")?.classList.remove("open")
+    document.getElementById("layoutDropdownMenu")?.classList.remove("open")
 }
 
 document.addEventListener("click", (e)=>{
-    if(!e.target.closest(".add-dropdown")){
-        const menu = document.getElementById("addDropdownMenu")
-        if(menu) menu.classList.remove("open")
-    }
+    if(!e.target.closest(".add-dropdown")) closeToolbarMenus()
 })
 
 function setZoom(value, btn){
@@ -1429,7 +1493,84 @@ function updatePlayerList(){
    Save layout to browser localStorage
 ========================================================= */
 
+function normalizeLayoutMeta(meta = {}){
+    return {
+        ...DEFAULT_LAYOUT_META,
+        ...(meta && typeof meta === "object" ? meta : {})
+    }
+}
+
+function getStoredLayoutData(){
+    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY)
+    if(!raw) return null
+
+    try {
+        return JSON.parse(raw)
+    } catch(e) {
+        console.error("Failed to parse stored layout:", e)
+        return null
+    }
+}
+
+function setDialogMessage(el, message, type = "error"){
+    if(!el) return
+    el.textContent = message || ""
+    el.classList.remove("hidden", "error", "success")
+    if(!message){
+        el.classList.add("hidden")
+        return
+    }
+    el.classList.add(type)
+}
+
+function formatSyncLabel(value){
+    if(!value) return "Never synced"
+    const date = new Date(value)
+    if(Number.isNaN(date.getTime())) return "Synced"
+    return "Synced " + date.toLocaleString()
+}
+
+function updateSaveStatus(){
+    const meta = getLayoutMeta()
+    layoutMeta = meta
+
+    if(saveStatus){
+        if(meta.serverLayoutId){
+            const name = meta.serverLayoutName || "Server layout"
+            saveStatus.textContent = name + " • " + formatSyncLabel(meta.lastServerSync)
+        } else {
+            saveStatus.textContent = "Local only"
+        }
+    }
+
+    layoutMenuCopyLink?.classList.toggle("hidden", !meta.serverLayoutId)
+    layoutMenuUnlink?.classList.toggle("hidden", !meta.serverLayoutId)
+    lmCopyLinkBtn?.classList.toggle("hidden", !meta.serverLayoutId)
+    lmUnlinkBtn?.classList.toggle("hidden", !meta.serverLayoutId)
+}
+
+function getLayoutMeta(){
+    const stored = getStoredLayoutData()
+    if(!stored || Array.isArray(stored)) return { ...DEFAULT_LAYOUT_META }
+    return normalizeLayoutMeta(stored._meta)
+}
+
+function setLayoutMeta(updates = {}){
+    const stored = getStoredLayoutData()
+    if(!stored || Array.isArray(stored)){
+        layoutMeta = normalizeLayoutMeta({ ...layoutMeta, ...updates })
+        return layoutMeta
+    }
+
+    layoutMeta = normalizeLayoutMeta({ ...stored._meta, ...updates })
+    stored._meta = layoutMeta
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(stored))
+    return layoutMeta
+}
+
 function saveLayout(){
+
+    const existingMeta = getLayoutMeta()
 
     let layout=[]
 
@@ -1466,12 +1607,15 @@ function saveLayout(){
     })
 
     const save = {
+        _meta: existingMeta,
         origin: { x: originX, y: originY },
         dimensions: { w: mapTilesX, h: mapTilesY },
         objects: layout
     }
 
-    localStorage.setItem("kingshotLayout", JSON.stringify(save))
+    layoutMeta = existingMeta
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(save))
+    updateSaveStatus()
 
 }
 
@@ -1483,24 +1627,24 @@ function loadLayout(){
 
     id=1
 
-    let data=localStorage.getItem("kingshotLayout")
-    if(!data) return
+    const stored = getStoredLayoutData()
+    if(!stored) return
 
     delete trap1.dataset.used
     delete trap2.dataset.used
 
-    let parsed = JSON.parse(data)
-
     // Support both new {origin, objects} format and legacy bare array
     let layout, origin, dimensions
-    if(Array.isArray(parsed)){
-        layout = parsed
+    if(Array.isArray(stored)){
+        layout = stored
         origin = { x: 0, y: 0 }
         dimensions = { w: 40, h: 25 }
+        layoutMeta = { ...DEFAULT_LAYOUT_META }
     } else {
-        layout = parsed.objects || []
-        origin = parsed.origin || { x: 0, y: 0 }
-        dimensions = parsed.dimensions || { w: 40, h: 25 }
+        layout = stored.objects || []
+        origin = stored.origin || { x: 0, y: 0 }
+        dimensions = stored.dimensions || { w: 40, h: 25 }
+        layoutMeta = normalizeLayoutMeta(stored._meta)
     }
 
     originX   = origin.x
@@ -1542,6 +1686,7 @@ document.querySelectorAll(".castle,.banner,.plainshq,.allianceresource,.water,.m
     updatePlayerList()
     applyCastleLevels()
     updateTerritoryOverlay()
+    updateSaveStatus()
 }
 
 function clearLayout(){
@@ -1550,16 +1695,24 @@ function clearLayout(){
     originY = 0
     mapTilesX = 40
     mapTilesY = 25
+    layoutMeta = { ...DEFAULT_LAYOUT_META }
+    cachedServerPassword = null
     applyMapDimensions()
 
     // adds empty layout to storage
-    localStorage.setItem("kingshotLayout", JSON.stringify({ origin: { x: 0, y: 0 }, dimensions: { w: 40, h: 25 }, objects: [] }))
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
+        _meta: layoutMeta,
+        origin: { x: 0, y: 0 },
+        dimensions: { w: 40, h: 25 },
+        objects: []
+    }))
 
     // then load it to clear the map and reset all variables
     loadLayout()
 
     // finally, initialize as new with traps in starting position
     positionTraps()
+    updateSaveStatus()
 }
 
 /* =========================================================
@@ -1568,7 +1721,7 @@ function clearLayout(){
 
 function exportLayout(){
 
-    let json = localStorage.getItem("kingshotLayout")
+    let json = localStorage.getItem(LAYOUT_STORAGE_KEY)
 
     if(!json){
         alert("No layout saved")
@@ -1596,7 +1749,7 @@ function importLayout(file){
     reader.onload = function(e){
 
         localStorage.setItem(
-            "kingshotLayout",
+            LAYOUT_STORAGE_KEY,
             e.target.result
         )
 
@@ -1608,42 +1761,6 @@ function importLayout(file){
 
 }
 
-async function shareLayout(){
-
-    let json = localStorage.getItem("kingshotLayout")
-
-    if(!json){
-        alert("No layout saved")
-        return
-    }
-
-    try {
-        const name = prompt("Name this layout for sharing:", "My Layout")
-        if(!name) return
-
-        const password = prompt("Set a password to protect edits (leave empty for none):", "")
-
-        const r = await fetch(API_BASE + "/api/layouts/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name, data: json, password: password || "" })
-        })
-
-        if(!r.ok){
-            alert("Failed to save layout to server")
-            return
-        }
-
-        const layout = await r.json()
-        const shareUrl = location.origin + location.pathname + "?layout=" + layout.id
-
-        prompt("Share this link:", shareUrl)
-
-    } catch(e) {
-        console.error("Share failed:", e)
-        alert("Failed to share layout. Is the server running?")
-    }
-}
 function exportPlayerList(){
 
     let players = []
@@ -1735,29 +1852,42 @@ async function loadFromServer(id){
             return
         }
         const layout = await r.json()
-        localStorage.setItem("kingshotLayout", layout.data)
+        localStorage.setItem(LAYOUT_STORAGE_KEY, layout.data)
         loadLayout()
-        document.getElementById("serverLayoutsDialog").close()
+        saveLayout()
+        setLayoutMeta({
+            serverLayoutId: layout.id,
+            serverLayoutName: layout.name,
+            hasServerPassword: layout.has_password,
+            lastServerSync: layout.updated_at || new Date().toISOString()
+        })
+        cachedServerPassword = null
+        updateSaveStatus()
+        layoutManagerDialog.close()
     } catch(e) {
         console.error("Failed to load from server:", e)
         alert("Failed to load layout from server")
     }
 }
 
-async function saveToServer(){
-    const json = localStorage.getItem("kingshotLayout")
+function openPublishDialog(mode = "new", prefillName = ""){
+    publishMode = mode
+    publishDialogTitle.textContent = mode === "saveas" ? "Save As New Layout" : "Publish Layout"
+    publishConfirmBtn.textContent = mode === "saveas" ? "Save As" : "Publish"
+    publishNameInput.value = prefillName || layoutMeta.serverLayoutName || ""
+    publishPasswordInput.value = ""
+    setDialogMessage(publishDialogMessage, "")
+    if(layoutManagerDialog?.open) layoutManagerDialog.close()
+    publishDialog.showModal()
+    publishNameInput.focus()
+}
+
+async function publishLayout(name, password){
+    const json = localStorage.getItem(LAYOUT_STORAGE_KEY)
     if(!json){
-        alert("No layout saved locally. Save your layout first.")
+        setDialogMessage(publishDialogMessage, "No local layout is available to publish.")
         return
     }
-
-    const name = document.getElementById("serverSaveName").value.trim()
-    if(!name){
-        alert("Please enter a name")
-        return
-    }
-
-    const password = document.getElementById("serverSavePassword").value
 
     try {
         const r = await fetch(API_BASE + "/api/layouts/", {
@@ -1767,30 +1897,41 @@ async function saveToServer(){
         })
 
         if(!r.ok){
-            alert("Failed to save layout to server")
+            setDialogMessage(publishDialogMessage, "Failed to publish layout.")
             return
         }
 
         const layout = await r.json()
-        alert("Layout saved! ID: " + layout.id)
-        document.getElementById("serverSaveName").value = ""
-        document.getElementById("serverSavePassword").value = ""
-        document.getElementById("saveToServerDialog").close()
-
+        setLayoutMeta({
+            serverLayoutId: layout.id,
+            serverLayoutName: layout.name,
+            hasServerPassword: !!password,
+            lastServerSync: layout.updated_at || new Date().toISOString()
+        })
+        cachedServerPassword = password || null
+        publishDialog.close()
+        updateSaveStatus()
     } catch(e) {
-        console.error("Save to server failed:", e)
-        alert("Failed to save to server. Is the server running?")
+        console.error("Publish failed:", e)
+        setDialogMessage(publishDialogMessage, "Failed to publish layout. Is the server running?")
     }
 }
 
-async function updateOnServer(id){
-    const json = localStorage.getItem("kingshotLayout")
-    if(!json){
-        alert("No layout saved locally")
-        return
-    }
+async function requestPassword(message, errorMessage = ""){
+    passwordRequestText.textContent = message
+    passwordRequestInput.value = ""
+    setDialogMessage(passwordRequestMessage, errorMessage)
+    passwordRequestDialog.showModal()
+    passwordRequestInput.focus()
 
-    const password = prompt("Enter password (leave empty if none):", "")
+    return new Promise(resolve => {
+        passwordRequestResolve = resolve
+    })
+}
+
+async function updateLinkedLayout(id, password = ""){
+    const json = localStorage.getItem(LAYOUT_STORAGE_KEY)
+    if(!json) return { ok: false, status: 0 }
 
     try {
         const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id), {
@@ -1799,26 +1940,120 @@ async function updateOnServer(id){
             body: JSON.stringify({ data: json, password: password || "" })
         })
 
-        if(r.status === 403){
-            alert("Incorrect password")
-            return
-        }
-        if(!r.ok){
-            alert("Failed to update layout")
-            return
-        }
-
-        alert("Layout updated!")
+        return { ok: r.ok, status: r.status }
     } catch(e) {
         console.error("Update failed:", e)
-        alert("Failed to update layout on server")
+        return { ok: false, status: 0, error: e }
     }
 }
 
-async function deleteFromServer(id){
+async function smartSave(){
+    saveLayout()
+
+    const meta = getLayoutMeta()
+    if(!meta.serverLayoutId){
+        openPublishDialog("new", meta.serverLayoutName || "")
+        return
+    }
+
+    let result = await updateLinkedLayout(meta.serverLayoutId, cachedServerPassword || "")
+
+    if(result.ok){
+        setLayoutMeta({ lastServerSync: new Date().toISOString() })
+        updateSaveStatus()
+        return
+    }
+
+    if(result.status === 404){
+        cachedServerPassword = null
+        setLayoutMeta({
+            serverLayoutId: null,
+            serverLayoutName: meta.serverLayoutName,
+            hasServerPassword: false,
+            lastServerSync: null
+        })
+        updateSaveStatus()
+        openPublishDialog("new", meta.serverLayoutName || "")
+        return
+    }
+
+    if(result.status === 403){
+        cachedServerPassword = null
+        let passwordMessage = ""
+
+        while(result.status === 403){
+            const password = await requestPassword(
+                "Enter the password for \"" + (meta.serverLayoutName || "this layout") + "\".",
+                passwordMessage
+            )
+            if(password === null) return
+
+            result = await updateLinkedLayout(meta.serverLayoutId, password)
+            if(result.ok){
+                cachedServerPassword = password
+                setLayoutMeta({ lastServerSync: new Date().toISOString() })
+                updateSaveStatus()
+                return
+            }
+
+            passwordMessage = result.status === 403 ? "Incorrect password." : "Failed to save layout to server."
+        }
+    }
+
+    alert("Failed to save layout to server")
+}
+
+async function deleteServerLayout(id, name, hasPassword){
     if(!confirm("Delete this layout from the server?")) return
 
-    const password = prompt("Enter password (leave empty if none):", "")
+    let password = ""
+    if(hasPassword){
+        let passwordMessage = ""
+
+        while(true){
+            password = await requestPassword(
+                "Enter the password to delete \"" + name + "\".",
+                passwordMessage
+            )
+            if(password === null) return
+
+            try {
+                const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id), {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: password || "" })
+                })
+
+                if(r.status === 403){
+                    passwordMessage = "Incorrect password."
+                    continue
+                }
+                if(!r.ok){
+                    alert("Failed to delete layout")
+                    return
+                }
+
+                const meta = getLayoutMeta()
+                if(meta.serverLayoutId === id){
+                    cachedServerPassword = null
+                    setLayoutMeta({
+                        serverLayoutId: null,
+                        serverLayoutName: null,
+                        hasServerPassword: false,
+                        lastServerSync: null
+                    })
+                    updateSaveStatus()
+                }
+
+                await refreshLayoutManager()
+                return
+            } catch(e) {
+                console.error("Delete failed:", e)
+                alert("Failed to delete layout from server")
+                return
+            }
+        }
+    }
 
     try {
         const r = await fetch(API_BASE + "/api/layouts/" + encodeURIComponent(id), {
@@ -1828,7 +2063,8 @@ async function deleteFromServer(id){
         })
 
         if(r.status === 403){
-            alert("Incorrect password")
+            setDialogMessage(passwordRequestMessage, "Incorrect password.")
+            passwordRequestDialog.showModal()
             return
         }
         if(!r.ok){
@@ -1836,46 +2072,176 @@ async function deleteFromServer(id){
             return
         }
 
-        openServerLayouts()
+        const meta = getLayoutMeta()
+        if(meta.serverLayoutId === id){
+            cachedServerPassword = null
+            setLayoutMeta({
+                serverLayoutId: null,
+                serverLayoutName: null,
+                hasServerPassword: false,
+                lastServerSync: null
+            })
+            updateSaveStatus()
+        }
+
+        await refreshLayoutManager()
     } catch(e) {
         console.error("Delete failed:", e)
         alert("Failed to delete layout from server")
     }
 }
 
-async function openServerLayouts(){
-    const tbody = document.getElementById("serverLayoutsBody")
-    tbody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>"
-    document.getElementById("serverLayoutsDialog").showModal()
+function renderLayoutManagerStatus(){
+    const meta = getLayoutMeta()
+    if(!meta.serverLayoutId){
+        lmCurrentStatus.textContent = "This layout is stored locally only. Saving will publish it as a new server layout."
+    } else {
+        lmCurrentStatus.textContent = "Linked to \"" + (meta.serverLayoutName || meta.serverLayoutId) + "\". " + formatSyncLabel(meta.lastServerSync)
+    }
+    updateSaveStatus()
+}
+
+async function refreshLayoutManager(){
+    renderLayoutManagerStatus()
+    serverLayoutsBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>"
 
     const layouts = await listServerLayouts()
 
     if(layouts.length === 0){
-        tbody.innerHTML = "<tr><td colspan='5'>No layouts found on server</td></tr>"
+        serverLayoutsBody.innerHTML = "<tr><td colspan='4'>No layouts found on server</td></tr>"
         return
     }
 
-    tbody.innerHTML = ""
+    serverLayoutsBody.innerHTML = ""
     layouts.forEach(l => {
         const tr = document.createElement("tr")
         const date = new Date(l.updated_at).toLocaleDateString()
-        tr.innerHTML = `
-            <td>${l.name}</td>
-            <td>${l.has_password ? "🔒" : ""}</td>
-            <td>${date}</td>
-            <td>
-                <button onclick="loadFromServer('${l.id}')">Load</button>
-                <button onclick="updateOnServer('${l.id}')">Update</button>
-                <button onclick="deleteFromServer('${l.id}')">Delete</button>
-            </td>
-        `
-        tbody.appendChild(tr)
+        const actions = document.createElement("td")
+        const openBtn = document.createElement("button")
+        openBtn.type = "button"
+        openBtn.textContent = "Open"
+        openBtn.addEventListener("click", () => loadFromServer(l.id))
+
+        const saveAsBtn = document.createElement("button")
+        saveAsBtn.type = "button"
+        saveAsBtn.textContent = "Save As"
+        saveAsBtn.addEventListener("click", () => openPublishDialog("saveas", l.name))
+
+        const deleteBtn = document.createElement("button")
+        deleteBtn.type = "button"
+        deleteBtn.textContent = "Delete"
+        deleteBtn.addEventListener("click", () => deleteServerLayout(l.id, l.name, l.has_password))
+
+        actions.appendChild(openBtn)
+        actions.appendChild(saveAsBtn)
+        actions.appendChild(deleteBtn)
+
+        const name = document.createElement("td")
+        name.textContent = l.name
+
+        const password = document.createElement("td")
+        password.textContent = l.has_password ? "🔒" : ""
+
+        const updated = document.createElement("td")
+        updated.textContent = date
+
+        tr.appendChild(name)
+        tr.appendChild(password)
+        tr.appendChild(updated)
+        tr.appendChild(actions)
+        serverLayoutsBody.appendChild(tr)
     })
 }
 
-function openSaveToServer(){
-    document.getElementById("saveToServerDialog").showModal()
+async function openLayoutManager(){
+    renderLayoutManagerStatus()
+    layoutManagerDialog.showModal()
+    await refreshLayoutManager()
 }
+
+async function copyShareLink(id){
+    const shareUrl = location.origin + location.pathname + "?layout=" + id
+
+    try {
+        await navigator.clipboard.writeText(shareUrl)
+    } catch(e) {
+        console.error("Clipboard copy failed:", e)
+        alert(shareUrl)
+    }
+}
+
+async function copyCurrentShareLink(){
+    const meta = getLayoutMeta()
+    if(!meta.serverLayoutId) return
+    await copyShareLink(meta.serverLayoutId)
+}
+
+function unlinkLayout(){
+    cachedServerPassword = null
+    setLayoutMeta({
+        serverLayoutId: null,
+        serverLayoutName: null,
+        hasServerPassword: false,
+        lastServerSync: null
+    })
+    updateSaveStatus()
+    renderLayoutManagerStatus()
+}
+
+publishConfirmBtn.addEventListener("click", async () => {
+    const name = publishNameInput.value.trim()
+    if(!name){
+        setDialogMessage(publishDialogMessage, "Please enter a layout name.")
+        return
+    }
+
+    saveLayout()
+    await publishLayout(name, publishPasswordInput.value)
+})
+
+publishCancelBtn.addEventListener("click", () => {
+    publishDialog.close()
+})
+
+passwordConfirmBtn.addEventListener("click", () => {
+    if(!passwordRequestResolve) return
+    const resolve = passwordRequestResolve
+    passwordRequestResolve = null
+    passwordRequestDialog.close()
+    resolve(passwordRequestInput.value)
+})
+
+passwordCancelBtn.addEventListener("click", () => {
+    if(!passwordRequestResolve){
+        passwordRequestDialog.close()
+        return
+    }
+    const resolve = passwordRequestResolve
+    passwordRequestResolve = null
+    passwordRequestDialog.close()
+    resolve(null)
+})
+
+layoutManagerCloseBtn.addEventListener("click", () => {
+    layoutManagerDialog.close()
+})
+
+lmSaveAsBtn.addEventListener("click", () => {
+    openPublishDialog("saveas", layoutMeta.serverLayoutName || "")
+})
+
+lmCopyLinkBtn.addEventListener("click", () => {
+    copyCurrentShareLink()
+})
+
+lmUnlinkBtn.addEventListener("click", () => {
+    unlinkLayout()
+})
+
+layoutImportFile.addEventListener("change", () => {
+    importLayout(layoutImportFile.files[0])
+    layoutImportFile.value = ""
+})
 
 /* =========================================================
    INITIALIZATION
