@@ -100,6 +100,15 @@ let offsetY = 0
 let hasDragged = false
 let dragCtrl = false
 
+/* TOUCH DRAG STATE (hold 250ms to drag; move before timer fires = pan) */
+let touchDragCandidate = null   // el being considered for drag
+let touchDragTimer     = null   // setTimeout handle
+let touchDragOffsetX   = 0     // touch offset within the element
+let touchDragOffsetY   = 0
+let touchDragStartX    = 0     // touch position at touchstart
+let touchDragStartY    = 0
+let touchDragReady     = false  // true once hold timer fires
+
 /* MAP PAN STATE */
 let isPanningMap = false
 let mapPanStartX = 0
@@ -378,6 +387,110 @@ map.addEventListener("mousedown", (e)=>{
     map.style.cursor = "grabbing"
 
 })
+
+/* =========================================================
+   TOUCH: MAP PAN + PINCH-TO-ZOOM + LONG-PRESS CONTEXT MENU
+========================================================= */
+
+let longPressTimer = null
+let longPressTouchX = 0
+let longPressTouchY = 0
+
+map.addEventListener("touchstart",(e)=>{
+
+    // Two fingers = pinch-to-zoom (cancel any pan/drag)
+    if(e.touches.length === 2){
+        isPanningMap = false
+        clearTimeout(touchDragTimer)
+        touchDragTimer = null
+        if(touchDragCandidate) touchDragCandidate.classList.remove("drag-preview", "dragging")
+        touchDragCandidate = null
+        touchDragReady = false
+        clearTimeout(longPressTimer)
+        longPressTimer = null
+        isPinching = true
+        pinchStartDist = getTouchDist(e.touches)
+        pinchStartZoom = zoom
+        return
+    }
+
+    const touch = e.touches[0]
+
+    // Long-press detection (only when touching empty map, not a draggable object)
+    if(e.target === map){
+        longPressTouchX = touch.clientX
+        longPressTouchY = touch.clientY
+
+        longPressTimer = setTimeout(()=>{
+            longPressTimer = null
+            suppressNextMapClick = true
+            hideAllContextMenus()
+
+            const rect = map.getBoundingClientRect()
+            const x = (longPressTouchX - rect.left) / zoom
+            const y = (longPressTouchY - rect.top)  / zoom
+
+            const objectClasses = ["castle","banner","trap","plainshq","allianceresource","water","mountain"]
+            const el = document.elementFromPoint(longPressTouchX, longPressTouchY)
+            const hit = el ? objectClasses.reduce((found, cls) => found || el.closest("." + cls), null) : null
+
+            if(hit){
+                contextMenuTarget = hit
+                objectContextMenu.style.left = longPressTouchX + "px"
+                objectContextMenu.style.top  = longPressTouchY + "px"
+                objectContextMenu.classList.add("visible")
+            } else {
+                contextMenuTarget = null
+                contextMenuTileX = Math.floor(x / grid)
+                contextMenuTileY = Math.floor(y / grid)
+                tileContextMenu.style.left = longPressTouchX + "px"
+                tileContextMenu.style.top  = longPressTouchY + "px"
+                tileContextMenu.classList.add("visible")
+            }
+
+            navigator.vibrate?.(50)
+        }, 500)
+
+        // Single-finger pan starts on empty map
+        isPanningMap = true
+        mapPanStartX = touch.clientX
+        mapPanStartY = touch.clientY
+        mapPanScrollLeft = mapWrapper.scrollLeft
+        mapPanScrollTop = mapWrapper.scrollTop
+    }
+
+}, { passive: true })
+
+map.addEventListener("touchend",()=>{
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+})
+
+map.addEventListener("touchmove",(e)=>{
+    // Cancel long-press if finger moved significantly
+    if(longPressTimer && e.touches.length === 1){
+        const touch = e.touches[0]
+        const dx = touch.clientX - longPressTouchX
+        const dy = touch.clientY - longPressTouchY
+        if(Math.abs(dx) > 8 || Math.abs(dy) > 8){
+            clearTimeout(longPressTimer)
+            longPressTimer = null
+        }
+    }
+    // Pinch-to-zoom live update
+    if(isPinching && e.touches.length === 2){
+        const dist = getTouchDist(e.touches)
+        const ratio = dist / pinchStartDist
+        zoom = Math.min(2, Math.max(0.75, pinchStartZoom * ratio))
+        map.style.transform = `scale(${zoom})`
+        map.style.transformOrigin = "top left"
+    }
+}, { passive: true })
+
+// Dismiss context menus on touch outside
+document.addEventListener("touchstart",(e)=>{
+    if(!e.target.closest(".context-menu")) hideAllContextMenus()
+}, { passive: true })
 
 /* =========================================================
    SELECTION
@@ -947,8 +1060,26 @@ function closeToolbarMenus(){
     document.getElementById("layoutDropdownMenu")?.classList.remove("open")
 }
 
+function toggleMobileMenu(){
+    const toolbar = document.querySelector(".toolbar-container")
+    const btn     = document.querySelector(".mobile-menu-btn")
+    const isOpen  = toolbar.classList.toggle("mobile-open")
+    btn.classList.toggle("menu-open", isOpen)
+    if(!isOpen) closeToolbarMenus()
+}
+
 document.addEventListener("click", (e)=>{
     if(!e.target.closest(".add-dropdown")) closeToolbarMenus()
+    // Close mobile menu when tapping anywhere outside it
+    if(!e.target.closest(".toolbar-container") && !e.target.closest(".mobile-toolbar-toggle")){
+        const toolbar = document.querySelector(".toolbar-container")
+        const btn     = document.querySelector(".mobile-menu-btn")
+        if(toolbar?.classList.contains("mobile-open")){
+            toolbar.classList.remove("mobile-open")
+            btn?.classList.remove("menu-open")
+            closeToolbarMenus()
+        }
+    }
 })
 
 function setZoom(value, btn){
@@ -1189,11 +1320,12 @@ deleteConfirm.addEventListener("click", () => {
 /* =========================================================
    DRAG SYSTEM
    ---------------------------------------------------------
-   Handles dragging of objects on the map
+   Handles dragging of objects on the map (mouse + touch)
 ========================================================= */
 
 function makeDraggable(el){
 
+    // ---- Mouse ----
     el.addEventListener("mousedown",(e)=>{
 
         if(e.button !== 0) return
@@ -1211,6 +1343,36 @@ function makeDraggable(el){
         selected.classList.add("drag-preview")
 
     })
+
+    // ---- Touch (hold 250ms without significant movement to arm drag) ----
+    el.addEventListener("touchstart",(e)=>{
+
+        if(e.touches.length !== 1) return
+
+        clearTimeout(touchDragTimer)
+        touchDragTimer = null
+
+        const touch = e.touches[0]
+        const rect  = el.getBoundingClientRect()
+
+        touchDragCandidate = el
+        touchDragOffsetX   = touch.clientX - rect.left
+        touchDragOffsetY   = touch.clientY - rect.top
+        touchDragStartX    = touch.clientX
+        touchDragStartY    = touch.clientY
+        touchDragReady     = false
+
+        // After 250ms of stillness, arm drag mode with visual + haptic feedback
+        touchDragTimer = setTimeout(()=>{
+            touchDragTimer = null
+            if(touchDragCandidate === el){
+                touchDragReady = true
+                el.classList.add("drag-preview")
+                navigator.vibrate?.(20)
+            }
+        }, 250)
+
+    }, { passive: true })
 
 }
 
@@ -1243,20 +1405,87 @@ document.addEventListener("mousemove",(e)=>{
 
 })
 
+document.addEventListener("touchmove",(e)=>{
+
+    // Pinch-to-zoom: handled separately
+    if(isPinching) return
+
+    const touch = e.touches.length > 0 ? e.touches[0] : null
+    if(!touch) return
+
+    // Touch drag candidate: decide between pan and drag based on hold timer
+    if(touchDragCandidate && !selected){
+        const dx = touch.clientX - touchDragStartX
+        const dy = touch.clientY - touchDragStartY
+
+        if(touchDragReady){
+            // Hold timer fired — small movement commits drag
+            if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
+                selected           = touchDragCandidate
+                offsetX            = touchDragOffsetX
+                offsetY            = touchDragOffsetY
+                hasDragged         = false
+                dragCtrl           = false
+                touchDragCandidate = null
+                touchDragReady     = false
+                selected.classList.add("dragging")
+                // drag-preview already on element from when timer fired
+                // fall through to drag movement below
+            } else {
+                return // barely moved yet after arming
+            }
+        } else if(Math.abs(dx) > 10 || Math.abs(dy) > 10){
+            // Moved before hold timer fired → cancel drag, switch to map pan
+            clearTimeout(touchDragTimer)
+            touchDragTimer = null
+            touchDragCandidate.classList.remove("drag-preview", "dragging")
+            touchDragCandidate = null
+            touchDragReady     = false
+            isPanningMap       = true
+            mapPanStartX       = touch.clientX
+            mapPanStartY       = touch.clientY
+            mapPanScrollLeft   = mapWrapper.scrollLeft
+            mapPanScrollTop    = mapWrapper.scrollTop
+            // fall through to panning below
+        } else {
+            return // in slop zone, waiting for timer or more movement
+        }
+    }
+
+    // Map panning
+    if(isPanningMap && e.touches.length === 1){
+        const dx = touch.clientX - mapPanStartX
+        const dy = touch.clientY - mapPanStartY
+        mapWrapper.scrollLeft = mapPanScrollLeft - dx
+        mapWrapper.scrollTop  = mapPanScrollTop  - dy
+        if(Math.abs(dx) > 4 || Math.abs(dy) > 4) suppressNextMapClick = true
+        return
+    }
+
+    if(!selected) return
+    if(e.touches.length !== 1) return
+
+    e.preventDefault() // prevent page scroll while dragging an object
+
+    hasDragged = true
+
+    let rect = map.getBoundingClientRect()
+
+    let x = (touch.clientX - rect.left - offsetX) / zoom
+    let y = (touch.clientY - rect.top  - offsetY) / zoom
+
+    selected.style.left = x + "px"
+    selected.style.top  = y + "px"
+
+}, { passive: false })
+
 /* =========================================================
    GRID SNAP
    ---------------------------------------------------------
    Snap objects to the grid when released
 ========================================================= */
 
-document.addEventListener("mouseup",()=>{
-
-    if(isPanningMap){
-        isPanningMap = false
-        map.style.cursor = ""
-    }
-
-    if(!selected) return
+function snapSelected(){
 
     let x = parseInt(selected.style.left)
     let y = parseInt(selected.style.top)
@@ -1290,8 +1519,77 @@ document.addEventListener("mouseup",()=>{
     }
 
     selected = null
+}
+
+document.addEventListener("mouseup",()=>{
+
+    if(isPanningMap){
+        isPanningMap = false
+        map.style.cursor = ""
+    }
+
+    if(!selected) return
+
+    snapSelected()
 
 })
+
+document.addEventListener("touchend",()=>{
+
+    // Always clean up hold timer
+    clearTimeout(touchDragTimer)
+    touchDragTimer = null
+
+    // Finger lifted while holding a candidate → treat as tap (no drag committed)
+    if(touchDragCandidate){
+        const el   = touchDragCandidate
+        touchDragCandidate = null
+        touchDragReady     = false
+        el.classList.remove("drag-preview", "dragging")
+        selectMapObject(el, false)
+        return
+    }
+
+    if(isPanningMap){
+        isPanningMap = false
+    }
+
+    if(isPinching){
+        // Snap to nearest valid zoom level
+        const levels = [0.75, 1, 1.5, 2]
+        let nearest = levels.reduce((prev, cur) =>
+            Math.abs(cur - zoom) < Math.abs(prev - zoom) ? cur : prev
+        )
+        const btn = document.querySelector(`.zoom-btn[onclick*="${nearest}"]`)
+        setZoom(nearest, btn || document.querySelector(".zoom-btn"))
+        isPinching = false
+        pinchStartDist = 0
+        pinchStartZoom = 1
+        return
+    }
+
+    if(!selected) return
+
+    snapSelected()
+
+})
+
+/* =========================================================
+   MAP PANNING & PINCH-TO-ZOOM (TOUCH)
+   ---------------------------------------------------------
+   Single-finger on empty map = pan; two-finger = zoom
+========================================================= */
+
+/* Pinch state */
+let isPinching = false
+let pinchStartDist = 0
+let pinchStartZoom = 1
+
+function getTouchDist(touches){
+    const dx = touches[0].clientX - touches[1].clientX
+    const dy = touches[0].clientY - touches[1].clientY
+    return Math.sqrt(dx*dx + dy*dy)
+}
 
 /* =========================================================
    PLAYER POWER ANALYSIS

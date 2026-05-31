@@ -207,6 +207,7 @@ body{
 .castle,.trap,.plainshq,.allianceresource,.water,.mountain{
     cursor:grab;
     user-select:none;
+    touch-action:none;
 }
 
 .castle:active,
@@ -270,9 +271,10 @@ body{
 .toolbar-container{
     margin-bottom:10px;
     display:flex;
+    flex-wrap:wrap;
     justify-content:flex-start;
     align-items:center;
-    gap:30px;
+    gap:16px;
 }
 
 .toolbar-group{
@@ -369,12 +371,16 @@ body{
     margin:20px auto;
 }
 
+/* Hamburger toggle — hidden on desktop, shown on mobile */
+.mobile-toolbar-toggle{
+    display:none;
+}
+
 .layout{
     display:flex;
     justify-content:center;
     align-items:stretch;
     gap:30px;
-    min-width:1900px;
     flex:1;
     min-height:0;
     overflow:hidden;
@@ -747,7 +753,7 @@ dialog label{
 ========================================================= */
 
 #bulkEditDialog{
-    width:420px;
+    width:min(420px, 92vw);
     max-height:80vh;
     flex-direction:column;
     gap:12px;
@@ -883,6 +889,212 @@ dialog input{
 
 .context-menu-item:hover{
     background:#3a3a3a;
+}
+
+/* =========================================================
+   MOBILE / RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    html{
+        height:auto;
+    }
+
+    body{
+        height:auto;
+        min-height:100%;
+        overflow-y:auto;
+        overflow-x:hidden;
+    }
+
+    /* Title is redundant on mobile — browser tab has it */
+    h2{
+        display:none;
+    }
+
+    .layout{
+        flex:none;
+        width:100%;
+        flex-direction:column;
+        overflow:visible;
+    }
+
+    /* Player panel sits below the map on mobile */
+    .player-panel{
+        width:100% !important;
+        max-height:40vh;
+        flex-direction:column;
+        order:2;
+    }
+
+    #playerList{
+        width:100% !important;
+    }
+
+    .map-area{
+        order:1;
+        overflow:visible;
+        flex:none;
+    }
+
+    .map-wrapper{
+        overflow:auto;
+        max-height:60vh;
+        -webkit-overflow-scrolling:touch;
+    }
+
+    /* Hamburger toggle button */
+    .mobile-toolbar-toggle{
+        display:flex;
+        padding:6px 8px;
+    }
+
+    .mobile-menu-btn{
+        width:100%;
+        text-align:left;
+        padding:10px 14px;
+        font-size:15px;
+        min-height:44px;
+    }
+
+    .mobile-menu-btn.menu-open{
+        background:#2e7d32;
+        border-color:#4caf50;
+    }
+
+    /* Toolbar collapses — hidden by default, shown as a panel when toggled */
+    .toolbar-container{
+        display:none;
+        flex-direction:column;
+        gap:0;
+        padding:4px 8px 8px;
+        margin-bottom:0;
+        background:#1e1e1e;
+        border-bottom:1px solid #444;
+    }
+
+    .toolbar-container.mobile-open{
+        display:flex;
+    }
+
+    /* Each toolbar group becomes a full-width row in the panel */
+    .toolbar-group{
+        width:100%;
+        padding-right:0;
+        padding:8px 0;
+        border-bottom:1px solid #333;
+    }
+
+    .toolbar-group:last-child{
+        border-bottom:none;
+    }
+
+    /* Add / Layout dropdown buttons span full width */
+    .add-dropdown{
+        display:block;
+    }
+
+    .add-dropdown > button{
+        width:100%;
+        text-align:left;
+    }
+
+    /* Zoom buttons fill the row evenly */
+    .toolbar-group .zoom-btn{
+        flex:1;
+        text-align:center;
+    }
+
+    /* Map settings: label wraps below button */
+    .toolbar-group .origin-label{
+        display:block;
+        margin-top:4px;
+    }
+
+    /* Minimum 44×44 touch targets on all buttons */
+    button,
+    .add-dropdown-item,
+    .context-menu-item{
+        min-height:44px;
+    }
+
+    .zoom-btn{
+        min-height:36px;
+        padding:6px 10px;
+    }
+
+    .rank-filter-btn{
+        min-height:36px;
+        padding:6px 10px;
+        font-size:13px;
+    }
+
+    /* Dialogs fit inside mobile viewport */
+    dialog{
+        max-width:96vw;
+        max-height:90vh;
+        overflow-y:auto;
+    }
+
+    #bulkEditDialog{
+        width:96vw;
+    }
+
+    #layoutManagerDialog{
+        width:96vw;
+    }
+
+    /* Dropdown menus must not overflow the viewport */
+    .add-dropdown-menu{
+        max-width:calc(100vw - 20px);
+    }
+
+    /* Larger context menu items for fat fingers */
+    .context-menu-item{
+        padding:12px 16px;
+        font-size:15px;
+    }
+
+    .save-status{
+        font-size:12px;
+        min-width:0;
+    }
+
+    .origin-label{
+        font-size:12px;
+    }
+
+    .player-header{
+        gap:8px;
+    }
+
+    .player-header button{
+        flex:1;
+        min-height:44px;
+    }
+
+    /* Ensure player rows are large enough to tap */
+    .player-info{
+        padding:10px 6px;
+    }
+
+    .player .edit{
+        width:44px;
+        min-height:44px;
+    }
+
+    /* Bulk edit table inputs */
+    .bulk-power-input{
+        width:70px;
+        font-size:16px; /* prevents iOS zoom on focus */
+        min-height:36px;
+    }
+
+    .bulk-table td,
+    .bulk-table thead th{
+        padding:8px 6px;
+    }
 }
 
 /* =========================================================
