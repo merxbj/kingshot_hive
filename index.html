@@ -69,17 +69,6 @@
 
 </dialog>
 
-<dialog id="deleteDialog">
-
-    <p id="deleteText">Delete object?</p>
-
-    <div class="dialog-buttons">
-        <button id="deleteConfirm">Delete</button>
-        <button id="deleteCancel">Cancel</button>
-    </div>
-
-</dialog>
-
 <dialog id="posDialog">
 
     <h3 id="posDialogTitle">Edit position</h3>
@@ -282,6 +271,10 @@
             <div class="toolbar-group">
                 <button id="saveBtn" onclick="smartSave()">Save</button>
                 <span id="saveStatus" class="save-status">Local only</span>
+            </div>
+
+            <div class="toolbar-group">
+                <button onclick="deleteAllCastles()">Delete all castles</button>
             </div>
 
             <div class="toolbar-group">

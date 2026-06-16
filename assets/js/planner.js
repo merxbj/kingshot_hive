@@ -54,10 +54,6 @@ const castleForm = document.getElementById("castleForm")
 const castleAddBtn = document.getElementById("castleAddBtn")
 const castleDialogTitle = document.getElementById("castleDialogTitle")
 
-const deleteDialog = document.getElementById("deleteDialog")
-const deleteConfirm = document.getElementById("deleteConfirm")
-const deleteCancel = document.getElementById("deleteCancel")
-
 const publishDialog = document.getElementById("publishDialog")
 const publishDialogTitle = document.getElementById("publishDialogTitle")
 const publishNameInput = document.getElementById("publishName")
@@ -88,7 +84,6 @@ const layoutMenuUnlink = document.getElementById("layoutMenuUnlink")
 
 /* DIALOG STATE */
 let editTarget = null
-let deleteTarget = null
 let posDialogTarget = null
 let publishMode = "new"
 let passwordRequestResolve = null
@@ -576,6 +571,31 @@ function selectMapObject(el, multi = false){
     updateTerritoryOverlay()
 }
 
+function deleteMapObjects(objects){
+    const toDelete = objects.filter(Boolean)
+    if(toDelete.length === 0) return
+
+    const deleting = new Set(toDelete)
+    activeObject.forEach(o => {
+        if(deleting.has(o)) activeObject.delete(o)
+    })
+
+    toDelete.forEach(o => {
+        o.classList.remove("active")
+        o.remove()
+    })
+
+    clearAxisHighlights()
+    if(activeObject.size === 1) highlightAxesForElement([...activeObject][0])
+    updatePlayerList()
+    updateTerritoryOverlay()
+}
+
+function deleteActiveObjects(){
+    if(activeObject.size === 0) return
+    deleteMapObjects([...activeObject])
+}
+
 /* =========================================================
    OBJECT CREATION
    ---------------------------------------------------------
@@ -921,15 +941,7 @@ function objectContextDelete(){
     hideAllContextMenus()
     const el = contextMenuTarget
     if(!el) return
-    let type = el.classList.contains("banner") ? "Banner" :
-               el.classList.contains("plainshq") ? "Plains HQ" :
-               el.classList.contains("allianceresource") ? "Alliance Resource" :
-               el.classList.contains("water") ? "Water" :
-               el.classList.contains("mountain") ? "Mountain" :
-               el.classList.contains("castle") ? "Castle" : "Trap"
-    deleteTarget = el
-    document.getElementById("deleteText").textContent = type + " delete?"
-    deleteDialog.showModal()
+    deleteMapObjects([el])
 }
 
 function contextMenuAdd(type){
@@ -1039,6 +1051,10 @@ function addMountain(){
 
     spawnOffset++
 
+}
+
+function deleteAllCastles(){
+    deleteMapObjects([...document.querySelectorAll(".castle")])
 }
 
 function toggleAddMenu(){
@@ -1298,26 +1314,6 @@ castleForm.addEventListener("submit", (e) => {
 })
 
 /* =========================================================
-   DELETE DIALOG HANDLING
-========================================================= */
-
-deleteCancel.addEventListener("click", () => {
-    deleteDialog.close()
-})
-
-deleteConfirm.addEventListener("click", () => {
-
-    if(deleteTarget){
-        deleteTarget.remove()
-        updatePlayerList()
-        updateTerritoryOverlay()
-    }
-
-    deleteDialog.close()
-
-})
-
-/* =========================================================
    DRAG SYSTEM
    ---------------------------------------------------------
    Handles dragging of objects on the map (mouse + touch)
@@ -1572,6 +1568,25 @@ document.addEventListener("touchend",()=>{
 
     snapSelected()
 
+})
+
+document.addEventListener("keydown", (e)=>{
+    if(e.key !== "Delete") return
+
+    const target = e.target
+    if(
+        target && (
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.tagName === "SELECT" ||
+            target.isContentEditable
+        )
+    ) return
+
+    if(activeObject.size === 0) return
+
+    e.preventDefault()
+    deleteActiveObjects()
 })
 
 /* =========================================================
